@@ -1,0 +1,99 @@
+buildscript {
+    if (project == rootProject) {
+        repositories {
+            google()
+            mavenCentral()
+        }
+
+        dependencies {
+            classpath 'com.android.tools.build:gradle:7.0.4'
+            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
+        }
+    }
+}
+
+def isNewArchitectureEnabled() {
+    return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
+}
+
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+apply plugin: "com.facebook.react"
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+android {
+    compileSdkVersion safeExtGet('TurboStarter_compileSdkVersion', 31)
+    defaultConfig {
+        minSdkVersion safeExtGet('TurboStarter_minSdkVersion', 21)
+        targetSdkVersion safeExtGet('TurboStarter_targetSdkVersion', 31)
+        versionCode 1
+        versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                cFlags "-Wall", "-Werror", "-fexceptions", "-frtti", "-DWITH_INSPECTOR=1"
+                arguments "-DCMAKE_VERBOSE_MAKEFILE=1"
+                cppFlags "-std=c++17"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+	        // pin cmake version to support M1 machines
+            version '3.22.1'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    lintOptions {
+        disable 'GradleCompatible'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    sourceSets.main {
+        java {
+            if (!isNewArchitectureEnabled()) {
+                srcDirs += [
+                    "build/generated/source/codegen/java"
+                ]
+            }
+        }
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+        url("$rootDir/../node_modules/react-native/android")
+    }
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':ReactAndroid')
+}
+
+if (isNewArchitectureEnabled()) {
+    react {
+        libraryName = "reactnativeturbostarter"
+        codegenJavaPackageName = "com.reactnativeturbostarter"
+        jsRootDir = file("../src/")
+        reactRoot = rootProject.file("../node_modules/react-native/")
+        codegenDir = rootProject.file("../node_modules/react-native-codegen/")
+    }
+}
