@@ -1,5 +1,5 @@
 {
-  "name": "react-native-turbo-starter",
+  "name": "turbo-secure-storage",
   "version": "0.1.0",
   "description": "React 0.68+ Turbo Module example with codegen with typescript for Objective-C and Java/Kotlin with C++ shared library",
   "main": "lib/commonjs/index",
@@ -13,7 +13,7 @@
     "android",
     "ios",
     "cpp",
-    "react-native-turbo-starter.podspec",
+    "turbo-secure-storage.podspec",
     "!lib/typescript/example",
     "!android/build",
     "!ios/build",
@@ -36,13 +36,13 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/talknagish/react-native-turbo-starter",
+  "repository": "https://github.com/ospfranco/turbo-secure-storage",
   "author": "Nagish <hello@talknagish.com> (https://talknagish.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/talknagish/react-native-turbo-starter/issues"
+    "url": "https://github.com/talknagish/turbo-secure-storage/issues"
   },
-  "homepage": "https://github.com/talknagish/react-native-turbo-starter#readme",
+  "homepage": "https://github.com/talknagish/turbo-secure-storage#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

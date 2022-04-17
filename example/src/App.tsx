@@ -16,11 +16,10 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
-import NativeTurboStarter from 'react-native-turbo-starter';
-
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+import NativeTurboStarter from 'turbo-secure-storage';
 
 const Section: React.FC<{
   title: string;
