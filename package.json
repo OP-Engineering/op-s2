@@ -1,7 +1,7 @@
 {
   "name": "turbo-secure-storage",
   "version": "0.1.0",
-  "description": "React 0.68+ Turbo Module example with codegen with typescript for Objective-C and Java/Kotlin with C++ shared library",
+  "description": "React 0.68+ Turbo Module for securely storing data using Keychain on iOS and KeyStore on Android",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
   "types": "lib/typescript/index.d.ts",
