@@ -37,12 +37,12 @@
     "android"
   ],
   "repository": "https://github.com/ospfranco/turbo-secure-storage",
-  "author": "Nagish <hello@talknagish.com> (https://talknagish.com)",
+  "author": "Oscar Franco <ospfranco@protonmail.com> (https://ospfranco.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/talknagish/turbo-secure-storage/issues"
+    "url": "https://github.com/ospfranco/turbo-secure-storage/issues"
   },
-  "homepage": "https://github.com/talknagish/turbo-secure-storage#readme",
+  "homepage": "https://github.com/ospfranco/turbo-secure-storage#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
