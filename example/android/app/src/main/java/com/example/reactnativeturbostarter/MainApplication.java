@@ -12,7 +12,7 @@ import com.facebook.soloader.SoLoader;
 import com.example.reactnativeturbostarter.newarchitecture.MainApplicationReactNativeHost;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import com.reactnativeturbostarter.TurboStarterPackage;
+import com.turbosecurestorage.TurboSecureStoragePackage;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -27,8 +27,7 @@ public class MainApplication extends Application implements ReactApplication {
         protected List<ReactPackage> getPackages() {
           @SuppressWarnings("UnnecessaryLocalVariable")
           List<ReactPackage> packages = new PackageList(this).getPackages();
-          // Packages that cannot be autolinked yet can be added manually here, for TurboStarterExample:
-          packages.add(new TurboStarterPackage());
+          packages.add(new TurboSecureStoragePackage());
           return packages;
         }
 

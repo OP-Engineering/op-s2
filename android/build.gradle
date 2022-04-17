@@ -24,29 +24,29 @@ apply plugin: "com.facebook.react"
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 android {
-    compileSdkVersion safeExtGet('TurboStarter_compileSdkVersion', 31)
+    compileSdkVersion safeExtGet('TurboSecureStorage_compileSdkVersion', 31)
     defaultConfig {
-        minSdkVersion safeExtGet('TurboStarter_minSdkVersion', 21)
-        targetSdkVersion safeExtGet('TurboStarter_targetSdkVersion', 31)
+        minSdkVersion safeExtGet('TurboSecureStorage_minSdkVersion', 21)
+        targetSdkVersion safeExtGet('TurboSecureStorage_targetSdkVersion', 31)
         versionCode 1
         versionName "1.0"
 
-        externalNativeBuild {
-            cmake {
-                cFlags "-Wall", "-Werror", "-fexceptions", "-frtti", "-DWITH_INSPECTOR=1"
-                arguments "-DCMAKE_VERBOSE_MAKEFILE=1"
-                cppFlags "-std=c++17"
-            }
-        }
+        // externalNativeBuild {
+        //     cmake {
+        //         cFlags "-Wall", "-Werror", "-fexceptions", "-frtti", "-DWITH_INSPECTOR=1"
+        //         arguments "-DCMAKE_VERBOSE_MAKEFILE=1"
+        //         cppFlags "-std=c++17"
+        //     }
+        // }
     }
 
-    externalNativeBuild {
-        cmake {
-            path "CMakeLists.txt"
-	        // pin cmake version to support M1 machines
-            version '3.22.1'
-        }
-    }
+    // externalNativeBuild {
+    //     cmake {
+    //         path "CMakeLists.txt"
+	//         // pin cmake version to support M1 machines
+    //         version '3.22.3'
+    //     }
+    // }
 
     buildTypes {
         release {
@@ -90,8 +90,8 @@ dependencies {
 
 if (isNewArchitectureEnabled()) {
     react {
-        libraryName = "reactnativeturbostarter"
-        codegenJavaPackageName = "com.reactnativeturbostarter"
+        libraryName = "turbosecurestorage"
+        codegenJavaPackageName = "com.turbosecurestorage"
         jsRootDir = file("../src/")
         reactRoot = rootProject.file("../node_modules/react-native/")
         codegenDir = rootProject.file("../node_modules/react-native-codegen/")

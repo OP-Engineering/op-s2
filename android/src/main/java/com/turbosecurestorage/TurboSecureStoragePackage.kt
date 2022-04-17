@@ -1,16 +1,16 @@
-package com.reactnativeturbostarter
+package com.turbosecurestorage
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.uimanager.ViewManager
 import java.util.ArrayList
-import com.reactnativeturbostarter.TurboStarterModule
+import com.turbosecurestorage.TurboSecureStorageModule
 
-class TurboStarterPackage : ReactPackage {
+class TurboSecureStoragePackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
         val modules: MutableList<NativeModule> = ArrayList()
-        modules.add(TurboStarterModule(reactContext))
+        modules.add(TurboSecureStorageModule(reactContext))
         return modules
     }
 
