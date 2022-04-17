@@ -147,7 +147,7 @@
   "codegenConfig": {
     "libraries": [
       {
-        "name": "TurboStarter",
+        "name": "TurboSecureStorage",
         "type": "modules",
         "jsSrcsDir": "./src"
       }

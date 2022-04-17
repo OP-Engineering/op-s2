@@ -1,2 +1,2 @@
-import NativeTurboStarter from './NativeTurboStarter';
-export default NativeTurboStarter;
+import TurboSecureStorage from './NativeTurboSecureStorage';
+export default TurboSecureStorage;
