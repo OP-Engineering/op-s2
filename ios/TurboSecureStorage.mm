@@ -2,9 +2,7 @@
 #import <TurboSecureStorage/TurboSecureStorage.h>
 #import <React/RCTLog.h>
 #include <Security/Security.h>
-#import <memory>
 #import <jsi/jsi.h>
-
 
 @interface TurboSecureStorage() <NativeTurboSecureStorageSpec>
 @end
@@ -13,15 +11,15 @@
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:(const facebook::react::ObjCTurboModule::InitParams &)params
 {
-    RCTLogInfo(@"TurboSecureStorage initialized");
     return std::make_shared<facebook::react::NativeTurboSecureStorageSpecJSI>(params);
 }
 
-+ (NSString *)moduleName {
++ (NSString *)moduleName
+{
     return @"TurboSecureStorage ";
 }
 
-- (NSDictionary *)setItem:(NSString *)key value:(NSString *)value {
+- (NSMutableDictionary *)newDefaultDictionary:(NSString *)key {
     NSMutableDictionary* queryDictionary = [[NSMutableDictionary alloc] init];
     [queryDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
     NSData *encodedIdentifier = [key dataUsingEncoding:NSUTF8StringEncoding];
@@ -29,16 +27,52 @@
     [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrAccount];
     [queryDictionary setObject:[[NSBundle mainBundle] bundleIdentifier] forKey:(id)kSecAttrService];
     
+    return queryDictionary;
+}
+
+- (CFStringRef)accessibilityValue:(NSString *)accessibility
+{
+    NSDictionary *keyMap = @{
+        @"AccessibleWhenUnlocked": (__bridge NSString *)kSecAttrAccessibleWhenUnlocked,
+        @"AccessibleAfterFirstUnlock": (__bridge NSString *)kSecAttrAccessibleAfterFirstUnlock,
+        @"AccessibleAlways": (__bridge NSString *)kSecAttrAccessibleAlways,
+        @"AccessibleWhenPasscodeSetThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
+        @"AccessibleWhenUnlockedThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        @"AccessibleAfterFirstUnlockThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+        @"AccessibleAlwaysThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleAlwaysThisDeviceOnly
+    };
+    
+    NSString *result = keyMap[accessibility];
+    
+    if (result) {
+        return (__bridge CFStringRef)result;
+    }
+    
+    return kSecAttrAccessibleAfterFirstUnlock;
+}
+
+- (NSDictionary *)setItem:(NSString *)key value:(NSString *)value options:(JS::NativeTurboSecureStorage::SpecSetItemOptions &)options {
+    
+    CFStringRef accessibility = kSecAttrAccessibleAfterFirstUnlock;
+    
+    if(&options == NULL) {
+        RCTLogInfo(@"Options object NOT passed");
+    } else {
+        accessibility = [self accessibilityValue:options.accessibility()];
+    }
+    
+    NSMutableDictionary *dict = [self newDefaultDictionary:key];
     
     NSData* valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
-    [queryDictionary setObject:valueData forKey:(id)kSecValueData];
+    [dict setObject:valueData forKey:(id)kSecValueData];
+    [dict setObject:(__bridge id)accessibility forKey:(id)kSecAttrAccessible];
     
-    OSStatus status = SecItemAdd((CFDictionaryRef)queryDictionary, NULL);
+    OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
     
     
     if (status != errSecSuccess)
     {
-        id resKeys[] = { @"error"};
+        id resKeys[] = { @"error" };
         id objects[] = { @"Could not save value" };
         NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
                                                                forKeys:resKeys
@@ -57,18 +91,13 @@
 }
 
 - (NSDictionary *)getItem:(NSString *)key {
-    NSMutableDictionary* queryDictionary = [[NSMutableDictionary alloc] init];
-    [queryDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
-    NSData *encodedIdentifier = [key dataUsingEncoding:NSUTF8StringEncoding];
-    [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrGeneric];
-    [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrAccount];
-    [queryDictionary setObject:[[NSBundle mainBundle] bundleIdentifier] forKey:(id)kSecAttrService];
+    NSMutableDictionary *dict = [self newDefaultDictionary:key];
     
-    [queryDictionary setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
-    [queryDictionary setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
+    [dict setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
+    [dict setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
     
     CFDataRef dataResult = nil;
-    OSStatus status = SecItemCopyMatching((CFDictionaryRef)queryDictionary, (CFTypeRef*) &dataResult);
+    OSStatus status = SecItemCopyMatching((CFDictionaryRef)dict, (CFTypeRef*) &dataResult);
     NSString* returnString = @"";
     if (status == noErr)
     {
@@ -94,15 +123,9 @@
 }
 
 - (NSDictionary *)deleteItem:(NSString *)key {
-    NSMutableDictionary* queryDictionary = [[NSMutableDictionary alloc] init];
-    [queryDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
-    NSData *encodedIdentifier = [key dataUsingEncoding:NSUTF8StringEncoding];
-    [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrGeneric];
-    [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrAccount];
-    [queryDictionary setObject:[[NSBundle mainBundle] bundleIdentifier] forKey:(id)kSecAttrService];
-    
+    NSMutableDictionary *dict = [self newDefaultDictionary:key];
 
-    OSStatus status = SecItemDelete((CFDictionaryRef)queryDictionary);
+    OSStatus status = SecItemDelete((CFDictionaryRef)dict);
 
     if (status != errSecSuccess)
         {
@@ -122,7 +145,5 @@
                                                              count:0];
     return dictionary;
 }
-
-
 
 @end
