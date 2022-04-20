@@ -1,6 +1,6 @@
 <h1 align="center">React Native Turbo Secure Storage</h1>
 
-![screenshot](https://raw.githubusercontent.com/ospfranco/turbo-secure-storage/main/header.png)
+![screenshot](https://github.com/ospfranco/turbo-secure-storage/blob/main/header.png?raw=true)
 
 <div align="center">
   <pre align="center">
