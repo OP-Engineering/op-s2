@@ -1,8 +1,9 @@
 #import "TurboSecureStorage.h"
 #import <TurboSecureStorage/TurboSecureStorage.h>
 #import <React/RCTLog.h>
-#include <Security/Security.h>
+#import <Security/Security.h>
 #import <jsi/jsi.h>
+#import <iostream>
 
 @interface TurboSecureStorage() <NativeTurboSecureStorageSpec>
 @end
@@ -16,7 +17,7 @@
 
 + (NSString *)moduleName
 {
-    return @"TurboSecureStorage ";
+    return @"TurboSecureStorage";
 }
 
 - (NSMutableDictionary *)newDefaultDictionary:(NSString *)key {
@@ -30,7 +31,7 @@
     return queryDictionary;
 }
 
-- (CFStringRef)accessibilityValue:(NSString *)accessibility
+- (CFStringRef)getAccessibilityValue:(NSString *)accessibility
 {
     NSDictionary *keyMap = @{
         @"AccessibleWhenUnlocked": (__bridge NSString *)kSecAttrAccessibleWhenUnlocked,
@@ -56,10 +57,13 @@
     CFStringRef accessibility = kSecAttrAccessibleAfterFirstUnlock;
     
     if(&options == NULL) {
-        RCTLogInfo(@"Options object NOT passed");
+        RCTLogInfo(@"[turbo-secure-storage] options NOT passed");
     } else {
-        accessibility = [self accessibilityValue:options.accessibility()];
+        accessibility = [self getAccessibilityValue:options.accessibility()];
     }
+    
+    // Delete item first
+    [self deleteItem:key];
     
     NSMutableDictionary *dict = [self newDefaultDictionary:key];
     
@@ -69,25 +73,13 @@
     
     OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
     
-    
-    if (status != errSecSuccess)
-    {
-        id resKeys[] = { @"error" };
-        id objects[] = { @"Could not save value" };
-        NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
-                                                               forKeys:resKeys
-                                                                 count:1];
-        
-        return dictionary;
+    if (status == noErr) {
+        return @{};
     }
-    
-    id resKeys[] = {};
-    id objects[] = {};
-    NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
-                                                           forKeys:resKeys
-                                                             count:0];
-    
-    return dictionary;
+
+    return @{
+        @"error": @"Could not save value",
+    };
 }
 
 - (NSDictionary *)getItem:(NSString *)key {
@@ -98,52 +90,33 @@
     
     CFDataRef dataResult = nil;
     OSStatus status = SecItemCopyMatching((CFDictionaryRef)dict, (CFTypeRef*) &dataResult);
-    NSString* returnString = @"";
-    if (status == noErr)
-    {
-        NSData* result = (__bridge NSData*) dataResult;
-        returnString = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
-        RCTLogInfo(@"TurboModuleSecureStorage setItem called");
-        id resKeys[] = { @"value"};
-        id objects[] = { returnString };
-        NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
-                                                               forKeys:resKeys
-                                                                 count:1];
-        
-        return dictionary;
-    }
-
-    id resKeys[] = { @"error"};
-    id objects[] = { @"Could not retrieve value" };
-    NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
-                                                           forKeys:resKeys
-                                                             count:1];
     
-    return dictionary;
+    if (status == noErr) {
+        NSData* result = (__bridge NSData*) dataResult;
+        NSString* returnString = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
+        
+        return @{
+            @"value": returnString
+        };
+    }
+    
+    return @{
+        @"error": @"Could not get value"
+    };
 }
 
 - (NSDictionary *)deleteItem:(NSString *)key {
     NSMutableDictionary *dict = [self newDefaultDictionary:key];
-
-    OSStatus status = SecItemDelete((CFDictionaryRef)dict);
-
-    if (status != errSecSuccess)
-        {
-        id resKeys[] = { @"error"};
-        id objects[] = { @"Could not delete value" };
-        NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
-                                                               forKeys:resKeys
-                                                                 count:1];
-        
-        return dictionary;
-        }
     
-    id resKeys[] = {};
-    id objects[] = {};
-    NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects
-                                                           forKeys:resKeys
-                                                             count:0];
-    return dictionary;
+    OSStatus status = SecItemDelete((CFDictionaryRef)dict);
+    
+    if (status == noErr ) {
+        return @{};
+    }
+    
+    return @{
+        @"error": @"Could delete value"
+    };
 }
 
 @end
