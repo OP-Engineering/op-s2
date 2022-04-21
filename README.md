@@ -42,8 +42,8 @@ On iOS (for now, would like to implement the same on Android) you can specify an
 
 ## TODO
 
-- [ ] Implement [official Android keystore implementation](https://github.com/android/security-samples/tree/main/BiometricLoginKotlin)
-- [ ] Add passcode / password fallback for Android
+- [ ] Implement [official Android keystore implementation](https://github.com/android/security-samples/blob/master/BiometricLoginKotlin/app/src/main/java/com/example/biometricloginsample/CryptographyManager.kt#L78)
+- [ ] Add passcode / password fallback for Android if possible
 - [ ] Add `getAllKeys`, `getAllItems` and `deleteAllItems` methods if possible
 - [ ] Support Secure Enclave on Apple devices
 - [ ] Revisit Android code to make sure it handles all edge cases (RTL text)
