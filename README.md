@@ -26,7 +26,7 @@ A turbo-module to securely store data, uses Keychain on iOS and KeyStore on Andr
 import TurboSecureStorage, { ACCESSIBILITY } from 'turbo-secure-storage';
 
 const { error } = TurboSecureStorage.setItem('foo', 'bar', {
-  accessibility: ACCESSIBILITY, // the most secure option
+  accessibility: ACCESSIBILITY.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY, // the most secure option
 });
 
 const { error, value } = TurboSecureStorage.getItem('foo');
