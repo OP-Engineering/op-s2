@@ -1,9 +1,8 @@
 ![screenshot](https://github.com/ospfranco/turbo-secure-storage/blob/main/header.png?raw=true)
 
+<pre align="center">yarn add turbo-secure-storage</pre>
+
 <div align="center">
-  <pre align="center" style="padding-bottom: 0;">
-    yarn add turbo-secure-storage
-  </pre>
   <a align="center" href="https://github.com/ospfranco?tab=followers">
     <img src="https://img.shields.io/github/followers/ospfranco?label=Follow%20%40ospfranco&style=social" />
   </a>
