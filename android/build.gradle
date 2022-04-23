@@ -7,7 +7,8 @@ buildscript {
 
         dependencies {
             classpath 'com.android.tools.build:gradle:7.0.4'
-            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
+            classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10'
+            classpath 'com.google.code.gson:gson:2.8.6'
         }
     }
 }
@@ -20,33 +21,17 @@ def safeExtGet(prop, fallback) {
     rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
-apply plugin: "com.facebook.react"
+apply plugin: 'com.facebook.react'
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 android {
     compileSdkVersion safeExtGet('TurboSecureStorage_compileSdkVersion', 31)
     defaultConfig {
-        minSdkVersion safeExtGet('TurboSecureStorage_minSdkVersion', 21)
+        minSdkVersion safeExtGet('TurboSecureStorage_minSdkVersion', 23)
         targetSdkVersion safeExtGet('TurboSecureStorage_targetSdkVersion', 31)
         versionCode 1
         versionName "1.0"
-
-        // externalNativeBuild {
-        //     cmake {
-        //         cFlags "-Wall", "-Werror", "-fexceptions", "-frtti", "-DWITH_INSPECTOR=1"
-        //         arguments "-DCMAKE_VERBOSE_MAKEFILE=1"
-        //         cppFlags "-std=c++17"
-        //     }
-        // }
     }
-
-    // externalNativeBuild {
-    //     cmake {
-    //         path "CMakeLists.txt"
-	//         // pin cmake version to support M1 machines
-    //         version '3.22.3'
-    //     }
-    // }
 
     buildTypes {
         release {
@@ -86,6 +71,7 @@ repositories {
 
 dependencies {
     implementation project(':ReactAndroid')
+    implementation "com.google.code.gson:gson:2.8.6"
 }
 
 if (isNewArchitectureEnabled()) {

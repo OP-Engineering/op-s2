@@ -18,7 +18,7 @@ A turbo-module to securely store data, uses Keychain on iOS and KeyStore on Andr
 ## Gotcha's
 
 - This being a TurboModule is only compatible with RN 0.68+
-- You might face some compilation errors on Android, please open tickets until I completely debug the process
+- Android's min SDK API is 23, to take advantange of the official keystore implementation
 
 ## Examples
 

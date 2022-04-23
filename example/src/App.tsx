@@ -8,10 +8,10 @@ const App = () => {
       <Button
         title="Set Item"
         onPress={() => {
-          // const { error } = TurboSecureStorage.setItem('foo', 'bar', {
-          //   accessibility: ACCESSIBILITY.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
-          // });
-          const { error } = TurboSecureStorage.setItem('foo', 'bar');
+          const { error } = TurboSecureStorage.setItem('foo', 'bar', {
+            // accessibility: ACCESSIBILITY.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+          });
+          // const { error } = TurboSecureStorage.setItem('foo', 'bar');
           if (error) {
             Alert.alert('Could not save string');
           }

@@ -1,12 +1,20 @@
 package com.turbosecurestorage
+import android.content.Context
 import com.facebook.react.bridge.*
 import android.util.Log
-import java.util.ArrayList
 
 class TurboSecureStorageModule(reactContext: ReactApplicationContext?) :
   NativeTurboSecureStorageSpec(reactContext) {
+  private val cryptographyManager = CryptographyManager()
+  private val ciphertextWrapper
+    get() = cryptographyManager.getCiphertextWrapperFromSharedPrefs(
+      this.reactApplicationContext,
+      SHARED_PREFS_FILENAME,
+      Context.MODE_PRIVATE,
+      CIPHERTEXT_WRAPPER
+    )
 
-  private val keystore = TurboKeyStore()
+//  private val keystore = TurboKeyStore()
 
 //  public static boolean isRTL(Locale locale) {
 //
@@ -15,17 +23,35 @@ class TurboSecureStorageModule(reactContext: ReactApplicationContext?) :
 //            directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC;
 //  }
 
-  override fun setItem(key: String, value: String): WritableMap {
+  override fun setItem(key: String, value: String, options: ReadableMap): WritableMap {
+    try {
+      Log.w("TurboSecureStorage", "marker0")
+      val cipher = cryptographyManager.getInitializedCipherForEncryption(key)
+      Log.w("TurboSecureStorage", "marker1")
+      val encryptedServerTokenWrapper = cryptographyManager.encryptData(value, cipher)
+      Log.w("TurboSecureStorage", "marker2")
+      cryptographyManager.persistCiphertextWrapperToSharedPrefs(
+        encryptedServerTokenWrapper,
+        this.reactApplicationContext,
+        SHARED_PREFS_FILENAME,
+        Context.MODE_PRIVATE,
+        CIPHERTEXT_WRAPPER
+      )
+      Log.w("TurboSecureStorage", "marker3")
+    } catch (e: Exception) {
+      Log.w("TurboSecureStorage", e.localizedMessage)
+//      obj.putString("error", "Could not read value")
+    }
+
+//    cryptographyManager.encryptData()
 //     Locale initialLocale = Locale.getDefault();
 //      if (isRTL(initialLocale)) {
 //          Locale.setDefault(Locale.ENGLISH);
 //          rnKeyStore.setCipherText(getReactApplicationContext(), key, value);
 //          Locale.setDefault(initialLocale);
-//          promise.resolve("RNSecureStorage: Key stored/updated successfully");
 //      } else {
     Log.i("TURBO_SECURE_STORAGE", "Storing: $key and $value")
-          keystore.setCipherText(reactApplicationContext, key, value);
-//          promise.resolve("RNSecureStorage: Key stored/updated successfully");
+//          keystore.setCipherText(reactApplicationContext, key, value);
 //      }
       
     val obj = WritableNativeMap()
@@ -36,8 +62,13 @@ class TurboSecureStorageModule(reactContext: ReactApplicationContext?) :
 
     val obj = WritableNativeMap()
     try {
-      val data = keystore.getPlainText(reactApplicationContext, key)
-      obj.putString("value", data)
+      ciphertextWrapper?.let { textWrapper ->
+        val cipher = cryptographyManager.getInitializedCipherForDecryption(
+          key, textWrapper.initializationVector
+        )
+        val plaintext = cryptographyManager.decryptData(textWrapper.ciphertext, cipher)
+        obj.putString("value", plaintext)
+      }
     } catch (e: Exception) {
       obj.putString("error", "Could not read value")
     }
@@ -45,19 +76,17 @@ class TurboSecureStorageModule(reactContext: ReactApplicationContext?) :
   }
 
   override fun deleteItem(key: String): WritableMap {
-    val fileDeleted = ArrayList<Boolean>()
-
-    for (filename in arrayOf(
-      Constants.SKS_DATA_FILENAME + key,
-      Constants.SKS_KEY_FILENAME + key
-    )) {
-      fileDeleted.add(reactApplicationContext.deleteFile(filename))
-    }
-    if (!fileDeleted.get(0) || !fileDeleted.get(1)) {
-//      promise.reject("404", "RNSecureStorage: Could not find the key to delete.")
-    } else {
-//      promise.resolve("RNSecureStorage: Key removed successfully")
-    }
+//    val fileDeleted = ArrayList<Boolean>()
+//
+//    for (filename in arrayOf(
+//      Constants.SKS_DATA_FILENAME + key,
+//      Constants.SKS_KEY_FILENAME + key
+//    )) {
+//      fileDeleted.add(reactApplicationContext.deleteFile(filename))
+//    }
+//    if (!fileDeleted.get(0) || !fileDeleted.get(1)) {
+//    } else {
+//    }
     val obj = WritableNativeMap()
     return obj
   }

@@ -51,7 +51,7 @@ export interface Spec extends TurboModule {
     key: string,
     value: string,
     options?: {
-      accessibility: string;
+      accessibility?: string;
     }
   ): { error?: Object };
 
