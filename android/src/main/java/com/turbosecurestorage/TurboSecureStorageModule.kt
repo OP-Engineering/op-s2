@@ -14,8 +14,6 @@ class TurboSecureStorageModule(reactContext: ReactApplicationContext?) :
       CIPHERTEXT_WRAPPER
     )
 
-//  private val keystore = TurboKeyStore()
-
 //  public static boolean isRTL(Locale locale) {
 //
 //    final int directionality = Character.getDirectionality(locale.getDisplayName().charAt(0));
@@ -59,7 +57,6 @@ class TurboSecureStorageModule(reactContext: ReactApplicationContext?) :
   }
 
   override fun getItem(key: String): WritableMap {
-
     val obj = WritableNativeMap()
     try {
       ciphertextWrapper?.let { textWrapper ->

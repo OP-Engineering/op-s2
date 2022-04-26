@@ -80,7 +80,9 @@ private class CryptographyManagerImpl : CryptographyManager {
     }
 
     override fun encryptData(plaintext: String, cipher: Cipher): CiphertextWrapper {
+        Log.w("EncryptData", "Marker0")
         val ciphertext = cipher.doFinal(plaintext.toByteArray(Charset.forName("UTF-8")))
+        Log.w("EncryptData", "Marker1")
         return CiphertextWrapper(ciphertext, cipher.iv)
     }
 
@@ -98,23 +100,19 @@ private class CryptographyManagerImpl : CryptographyManager {
         // If Secretkey was previously created for that keyName, then grab and return it.
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null) // Keystore must be loaded before it can be accessed
-        Log.w("CryptographyManager", "marker0")
         keyStore.getKey(keyName, null)?.let { return it as SecretKey }
 
-        Log.w("CryptographyManager", "marker1")
         // if you reach here, then a new SecretKey must be generated for that keyName
         val paramsBuilder = KeyGenParameterSpec.Builder(
             keyName,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
         )
-        Log.w("CryptographyManager", "marker2")
         paramsBuilder.apply {
             setBlockModes(ENCRYPTION_BLOCK_MODE)
             setEncryptionPaddings(ENCRYPTION_PADDING)
             setKeySize(KEY_SIZE)
             setUserAuthenticationRequired(true)
         }
-        Log.w("CryptographyManager", "marker3")
 
         val keyGenParams = paramsBuilder.build()
         val keyGenerator = KeyGenerator.getInstance(

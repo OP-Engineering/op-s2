@@ -13,6 +13,10 @@
 </div>
 <br />
 
+# EXPERIMENTAL MODULE
+
+I'm still playing around with android trying to get the implementation to conform to the best security practices... if you are willing to take the challenge feel free to open a PR
+
 A turbo-module to securely store data, uses Keychain on iOS and KeyStore on Android.
 
 ## Gotcha's
