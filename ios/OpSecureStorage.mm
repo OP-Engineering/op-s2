@@ -1,18 +1,35 @@
 #import "OpSecureStorage.h"
+#import <React/RCTBridge+Private.h>
+#import <React/RCTUtils.h>
+#import <ReactCommon/RCTTurboModule.h>
+#import <jsi/jsi.h>
+#import "bindings.h"
+
 
 @implementation OpSecureStorage
 RCT_EXPORT_MODULE()
 
-// Example method
-// See // https://reactnative.dev/docs/native-modules-ios
-RCT_EXPORT_METHOD(multiply:(double)a
-                  b:(double)b
-                  resolve:(RCTPromiseResolveBlock)resolve
-                  reject:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install)
 {
-    NSNumber *result = @(opengineering_opsecurestorage::multiply(a, b));
-
-    resolve(result);
+    RCTBridge *bridge = [RCTBridge currentBridge];
+    RCTCxxBridge *cxxBridge = (RCTCxxBridge *)bridge;
+    if (cxxBridge == nil) {
+        return @false;
+    }
+    
+    using namespace facebook;
+    
+    auto jsiRuntime = (jsi::Runtime *)cxxBridge.runtime;
+    if (jsiRuntime == nil) {
+        return @false;
+    }
+    auto &runtime = *jsiRuntime;
+    auto callInvoker = bridge.jsCallInvoker;
+    
+    
+    opsecurestorage::install(runtime, callInvoker);
+    
+    return @true;
 }
 
 
