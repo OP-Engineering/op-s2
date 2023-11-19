@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
   }
 
   s.header_mappings_dir = "cpp"
-  s.source_files = "ios/**/*.{h,m,mm}"
+  s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{c,h,hpp,cpp}"
   
   s.dependency "React"
   s.dependency "React-Core"
