@@ -1,7 +1,7 @@
 #ifdef ANDROID
 // LOGS ANDROID
 #include <android/log.h>
-#define LOG_TAG "op-sqlite"
+#define LOG_TAG "op-s2"
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -11,7 +11,7 @@
 #else
 // LOGS NO ANDROID
 #include <stdio.h>
-#define LOG_TAG "op-sqlite"
+#define LOG_TAG "op-s2"
 #define LOGV(...)      \
   printf("  ");        \
   printf(__VA_ARGS__); \

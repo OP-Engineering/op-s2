@@ -1,4 +1,4 @@
-package com.opengineering.opsecurestorage;
+package com.op.s2;
 
 import androidx.annotation.NonNull;
 
@@ -11,12 +11,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OpSecureStoragePackage implements ReactPackage {
+public class OPS2Package implements ReactPackage {
   @NonNull
   @Override
   public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
     List<NativeModule> modules = new ArrayList<>();
-    modules.add(new OpSecureStorageModule(reactContext));
+    modules.add(new OPS2Module(reactContext));
     return modules;
   }
 

@@ -15,16 +15,23 @@ def isNewArchitectureEnabled() {
 
 apply plugin: "com.android.library"
 
+def resolveBuildType() {
+    Gradle gradle = getGradle()
+    String tskReqStr = gradle.getStartParameter().getTaskRequests()['args'].toString()
+
+    return tskReqStr.contains('Release') ? 'release' : 'debug'
+}
+
 if (isNewArchitectureEnabled()) {
   apply plugin: "com.facebook.react"
 }
 
 def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OpSecureStorage_" + name]
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OPS2" + name]
 }
 
 def getExtOrIntegerDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["OpSecureStorage_" + name]).toInteger()
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["OPS2" + name]).toInteger()
 }
 
 def supportsNamespace() {
@@ -38,7 +45,7 @@ def supportsNamespace() {
 
 android {
   if (supportsNamespace()) {
-    namespace "com.opengineering.opsecurestorage"
+    namespace "com.opengineering.OPS2"
 
     sourceSets {
       main {
@@ -50,15 +57,33 @@ android {
   ndkVersion getExtOrDefault("ndkVersion")
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
 
+  buildFeatures {
+    prefab true
+  }
+
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
 
     externalNativeBuild {
       cmake {
-        cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
+        cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all -DON_ANDROID"
         abiFilters "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+        arguments '-DANDROID_STL=c++_shared'
       }
+    }
+
+    packagingOptions {
+      doNotStrip resolveBuildType() == 'debug' ? "**/**/*.so" : ''
+      excludes = [
+              "META-INF",
+              "META-INF/**",
+              "**/libjsi.so",
+              "**/libreact_nativemodule_core.so",
+              "**/libturbomodulejsijni.so",
+              "**/libc++_shared.so",
+              "**/libfbjni.so"
+      ]
     }
   }
 
@@ -95,5 +120,21 @@ dependencies {
   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
+  implementation("androidx.security:security-crypto:1.1.0-alpha06")
+  implementation("androidx.biometric:biometric:1.2.0-alpha05")
 }
 
+// Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
+tasks.whenTaskAdded { task ->
+  if (task.name.contains("configureCMakeDebug")) {
+    rootProject.getTasksByName("packageReactNdkDebugLibs", true).forEach {
+      task.dependsOn(it)
+    }
+  }
+  // We want to add a dependency for both configureCMakeRelease and configureCMakeRelWithDebInfo
+  if (task.name.contains("configureCMakeRel")) {
+    rootProject.getTasksByName("packageReactNdkReleaseLibs", true).forEach {
+      task.dependsOn(it)
+    }
+  }
+}
