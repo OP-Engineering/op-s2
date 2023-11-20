@@ -1,6 +1,5 @@
 #include "bindings.h"
 #import <LocalAuthentication/LocalAuthentication.h>
-//#import <React/RCTLog.h>
 #import <Security/Security.h>
 #import "macros.h"
 
@@ -72,7 +71,7 @@ namespace opsecurestorage {
     void _delete(std::string &key, bool withBiometrics) {
         NSMutableDictionary *dict = newDefaultDictionary(key);
         if(withBiometrics) {
-//            [dict setObject:(__bridge id)[self getBioSecAccessControl] forKey:(id)kSecAttrAccessControl];
+            [dict setObject:(__bridge id)getBioSecAccessControl() forKey:(id)kSecAttrAccessControl];
         }
         SecItemDelete((CFDictionaryRef)dict);
     }
@@ -81,28 +80,38 @@ namespace opsecurestorage {
     void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker)
     {
         auto set = HOSTFN("set", 1) {
+            auto res = jsi::Object(rt);
             CFStringRef accessibility = kSecAttrAccessibleAfterFirstUnlock;
             
             if(count < 1) {
-                throw jsi::JSError(rt, "Params object is missing");
+                res.setProperty(rt, "error", "Params object is missing");
+                return res;
             }
             
             if(!args[0].isObject()) {
-                throw jsi::JSError(rt, "Params must be an object with key and value");
+                res.setProperty(rt, "error", "Params is not an object");
+                return res;
             }
             
             jsi::Object params = args[0].asObject(rt);
             
             if(!params.hasProperty(rt, "key")) {
-                throw jsi::JSError(rt, "key property is missing");
+                res.setProperty(rt, "error", "Key property is missing");
+                return res;
             }
             
-            if(!params.hasProperty(rt, "val")) {
-                throw jsi::JSError(rt, "val property is missing");
+            if(!params.hasProperty(rt, "value")) {
+                res.setProperty(rt, "error", "Value property is missing");
+                return res;
+            }
+            
+            if(!params.getProperty(rt, "value").isString()) {
+                res.setProperty(rt, "error", "Value property is not a string");
+                return res;
             }
             
             std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
-            std::string val = params.getProperty(rt, "val").asString(rt).utf8(rt);
+            std::string val = params.getProperty(rt, "value").asString(rt).utf8(rt);
             
             if(params.hasProperty(rt, "accessibility")) {
                 if(params.getProperty(rt, "accessibility").isNumber()) {
@@ -128,13 +137,12 @@ namespace opsecurestorage {
                 [dict setObject:(__bridge id)accessibility forKey:(id)kSecAttrAccessible];
             }
         
-//            NSData* valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
             NSData* data = [NSData dataWithBytes:val.data() length:val.length()];
             [dict setObject:data forKey:(id)kSecValueData];
         
             OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
         
-            auto res = jsi::Object(rt);
+            
             
             if (status == noErr) {
                 return res;
@@ -214,38 +222,57 @@ namespace opsecurestorage {
             
             if (status == noErr) {
                 NSData* result = (__bridge NSData*) dataResult;
-//                std::string val = std::string(static_cast<const char*>(result.bytes), result.length);
                 NSString* returnString = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
                 res.setProperty(rt, "value", [returnString UTF8String]);
                 return res;
             }
         
-            auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::to_string(status));
-            
-            res.setProperty(rt, "error", errorStr);
+            if(status == -25300) {
+                auto errorStr = jsi::String::createFromUtf8(rt, "NOT FOUND");
+                res.setProperty(rt, "error", errorStr);
+            } else {
+                auto errorStr = jsi::String::createFromUtf8(rt, "UKNOWN ERROR: " + std::to_string(status));
+                res.setProperty(rt, "error", errorStr);
+            }
             
             return res;
+        });
+        
+        auto del = HOSTFN("delete", 1) {
+            
+            if(count < 1) {
+                throw jsi::JSError(rt, "Params object is missing");
+            }
+            
+            if(!args[0].isObject()) {
+                throw jsi::JSError(rt, "Params must be an object with key and value");
+            }
+            
+            jsi::Object params = args[0].asObject(rt);
+            
+            if(!params.hasProperty(rt, "key")) {
+                throw jsi::JSError(rt, "key property is missing");
+            }
+            
+            std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
+            
+            bool withBiometrics = false;
+            
+            if(params.hasProperty(rt, "withBiometrics")) {
+                withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
+            }
+            
+            _delete(key, withBiometrics);
+            
+            return {};
         });
         
         jsi::Object module = jsi::Object(rt);
         
         module.setProperty(rt, "set", std::move(set));
         module.setProperty(rt, "get", std::move(get));
+        module.setProperty(rt, "del", std::move(del));
         
-        rt.global().setProperty(rt, "__OPSecureStoreProxy", std::move(module));
+        rt.global().setProperty(rt, "__OPS2Proxy", std::move(module));
     }
 }
-
-
-//
-
-
-//
-//- (NSDictionary *)deleteItem:(NSString *)key options:(JS::NativeTurboSecureStorage::SpecDeleteItemOptions &)options {
-//
-//    [self innerDelete:key withBiometrics:options.biometricAuthentication().value()];
-//
-//    return @{};
-//}
-//
-//@end

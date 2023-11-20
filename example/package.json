@@ -10,17 +10,27 @@
     "build:ios": "cd ios && xcodebuild -workspace OpSecureStorageExample.xcworkspace -scheme OpSecureStorageExample -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
   "dependencies": {
+    "@craftzdog/react-native-buffer": "^6.0.5",
+    "chai": "^4.3.10",
+    "events": "^3.3.0",
+    "mocha": "^10.2.0",
+    "nativewind": "^2.0.11",
     "react": "18.2.0",
-    "react-native": "0.72.7"
+    "react-native": "0.72.7",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
     "@babel/runtime": "^7.20.0",
     "@react-native/metro-config": "^0.72.11",
+    "@types/chai": "^4.3.10",
+    "@types/mocha": "^10.0.4",
     "babel-plugin-module-resolver": "^5.0.0",
     "metro-react-native-babel-preset": "0.76.8",
-    "pod-install": "^0.1.0"
+    "pod-install": "^0.1.0",
+    "tailwindcss": "3.3.2"
   },
   "engines": {
     "node": ">=16"

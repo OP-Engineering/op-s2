@@ -1,4 +1,4 @@
-#import "OpSecureStorage.h"
+#import "OPS2.h"
 #import <React/RCTBridge+Private.h>
 #import <React/RCTUtils.h>
 #import <ReactCommon/RCTTurboModule.h>
@@ -6,7 +6,7 @@
 #import "bindings.h"
 
 
-@implementation OpSecureStorage
+@implementation OPS2
 RCT_EXPORT_MODULE()
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install)
