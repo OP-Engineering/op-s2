@@ -2660,6 +2660,8 @@ __metadata:
     pod-install: ^0.1.0
     react: 18.2.0
     react-native: 0.72.7
+    react-native-mmkv: ^2.11.0
+    react-native-performance: ^5.1.0
     stream-browserify: ^3.0.0
     tailwindcss: 3.3.2
     util: ^0.12.5
@@ -11453,6 +11455,25 @@ __metadata:
   bin:
     bob: bin/bob
   checksum: 258da6ecd03be52cc05a3e3a7c481890c7c0b7b62ae9f263c5f3d6fafeae95bd9445ad2f6c2513f7f4e4569eee935a18ae94c7491f58d6916af515c88de9e0a1
+  languageName: node
+  linkType: hard
+
+"react-native-mmkv@npm:^2.11.0":
+  version: 2.11.0
+  resolution: "react-native-mmkv@npm:2.11.0"
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.71.0"
+  checksum: 23ba624db8a4c530532aaab78705b58d1c9eefc3173dae3b1f86c8cb4d0e5abe3d175079c263251bfed406dc9f6ccda3657f138177916866ea0c0dc8fa3d2389
+  languageName: node
+  linkType: hard
+
+"react-native-performance@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "react-native-performance@npm:5.1.0"
+  peerDependencies:
+    react-native: "*"
+  checksum: 01563cb0a2cec575474b85a3663eddd93de6f5c260380997d445433916488863049e5acd9d2b45cf2f1e140c411890113934341d219394f4ba53b79aa7161037
   languageName: node
   linkType: hard
 

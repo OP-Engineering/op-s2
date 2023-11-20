@@ -1,4 +1,4 @@
-import { set, get } from '@op-engineering/op-s2';
+import { set, get, del } from '@op-engineering/op-s2';
 import { beforeEach, describe, it } from './MochaRNAdapter';
 import chai from 'chai';
 
@@ -43,6 +43,33 @@ export function getSetTests() {
       });
 
       expect(error).to.equal('Value property is not a string');
+    });
+
+    it('Deletes a key', () => {
+      const key = 'key4';
+
+      set({
+        key,
+        value: 'myTestValue',
+      });
+
+      let { value, error } = get({
+        key,
+      });
+
+      expect(error).to.be.undefined;
+      expect(value).to.equal('myTestValue');
+
+      del({
+        key,
+      });
+
+      let { value: val2, error: error2 } = get({
+        key,
+      });
+
+      expect(val2).to.be.undefined;
+      expect(error2).to.equal('NOT FOUND');
     });
   });
 }

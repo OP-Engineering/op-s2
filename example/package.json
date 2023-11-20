@@ -17,6 +17,8 @@
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-native": "0.72.7",
+    "react-native-mmkv": "^2.11.0",
+    "react-native-performance": "^5.1.0",
     "stream-browserify": "^3.0.0",
     "util": "^0.12.5"
   },

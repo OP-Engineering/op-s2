@@ -141,8 +141,6 @@ namespace opsecurestorage {
             [dict setObject:data forKey:(id)kSecValueData];
         
             OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
-        
-            
             
             if (status == noErr) {
                 return res;
