@@ -37,10 +37,10 @@ namespace opsecurestorage {
                                                nil); // Error pointer
     }
 
-    NSMutableDictionary* newDefaultDictionary(NSString *key) {
+    NSMutableDictionary* newDefaultDictionary(std::string key) {
         NSMutableDictionary* queryDictionary = [[NSMutableDictionary alloc] init];
         [queryDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
-        NSData *encodedIdentifier = [key dataUsingEncoding:NSUTF8StringEncoding];
+        NSData *encodedIdentifier = [NSData dataWithBytes:key.data() length:key.length()];
         [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrGeneric];
         [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrAccount];
         [queryDictionary setObject:[[NSBundle mainBundle] bundleIdentifier] forKey:(id)kSecAttrService];
@@ -72,7 +72,7 @@ namespace opsecurestorage {
     void _delete(std::string &key, bool withBiometrics) {
         NSMutableDictionary *dict = newDefaultDictionary(key);
         if(withBiometrics) {
-            [dict setObject:(__bridge id)[self getBioSecAccessControl] forKey:(id)kSecAttrAccessControl];
+//            [dict setObject:(__bridge id)[self getBioSecAccessControl] forKey:(id)kSecAttrAccessControl];
         }
         SecItemDelete((CFDictionaryRef)dict);
     }
@@ -112,41 +112,125 @@ namespace opsecurestorage {
             
             bool withBiometrics = false;
             
-            if(params.hasProperty(rt, "biometricAuthentication")) {
-                withBiometrics = params.getProperty(rt, "biometricAuthentication").asBool();
+            if(params.hasProperty(rt, "withBiometrics")) {
+                withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
             }
-        
         
             _delete(key, withBiometrics);
         
-            NSMutableDictionary *dict = [self newDefaultDictionary:key];
+            NSMutableDictionary *dict = newDefaultDictionary(key);
         
             // kSecAttrAccessControl is mutually excluse with kSecAttrAccessible
             // https://mobile-security.gitbook.io/mobile-security-testing-guide/ios-testing-guide/0x06f-testing-local-authentication
             if(withBiometrics) {
-                [dict setObject:(__bridge_transfer id)[self getBioSecAccessControl] forKey:(id)kSecAttrAccessControl];
+                [dict setObject:(__bridge_transfer id)getBioSecAccessControl() forKey:(id)kSecAttrAccessControl];
             } else {
                 [dict setObject:(__bridge id)accessibility forKey:(id)kSecAttrAccessible];
             }
         
-            NSData* valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
-            [dict setObject:valueData forKey:(id)kSecValueData];
+//            NSData* valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
+            NSData* data = [NSData dataWithBytes:val.data() length:val.length()];
+            [dict setObject:data forKey:(id)kSecValueData];
         
             OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
         
+            auto res = jsi::Object(rt);
+            
             if (status == noErr) {
-                return @{};
+                return res;
+            }
+            
+            auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::to_string(status));
+            
+            res.setProperty(rt, "error", errorStr);
+            
+            return res;
+        });
+        
+        auto get = HOSTFN("get", 1) {
+            if(count < 1) {
+                throw jsi::JSError(rt, "Params object is missing");
+            }
+            
+            if(!args[0].isObject()) {
+                throw jsi::JSError(rt, "Params must be an object with key and value");
+            }
+            
+            jsi::Object params = args[0].asObject(rt);
+            
+            if(!params.hasProperty(rt, "key")) {
+                throw jsi::JSError(rt, "key property is missing");
+            }
+            
+            std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
+            
+            bool withBiometrics = false;
+            
+            if(params.hasProperty(rt, "withBiometrics")) {
+                withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
+            }
+            
+            NSMutableDictionary *dict = newDefaultDictionary(key);
+        
+            [dict setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
+            [dict setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
+            
+            auto res = jsi::Object(rt);
+        
+            if(withBiometrics) {
+                BiometricsState biometricsState = getBiometricsState();
+                LAContext *authContext = [[LAContext alloc] init];
+        
+                // If device has no passcode/faceID/touchID then wallet-core cannot read the value from memory
+                if(biometricsState == kBiometricsStateNotAvailable) {
+                    auto errorStr = jsi::String::createFromUtf8(rt, "Biometrics not available");
+                    
+                    res.setProperty(rt, "error", errorStr);
+                    
+                    return res;
+                }
+        
+                if(biometricsState == kBiometricsStateLocked) {
+        
+                    // TODO receiving a localized string might be necessary if this is happening on production
+                    [authContext evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
+                                localizedReason:@"You need to unlock your device"
+                                          reply:^(BOOL success, NSError *error) {
+                        if (!success) {
+                            // Edge case when device might locked out after too many password attempts
+                            // User has failed to authenticate, but due to this being a callback cannot interrupt upper lexical scope
+                            // We should somehow prompt/tell the user that it has failed to authenticate
+                            // and wallet could not be loaded
+                        }
+                    }];
+                }
+        
+                [dict setObject:(__bridge id) getBioSecAccessControl() forKey:(id)kSecAttrAccessControl];
             }
         
-            return @{
-                @"error": @"Could not save value",
-            };
-            return {};
+            CFDataRef dataResult = nil;
+            OSStatus status = SecItemCopyMatching((CFDictionaryRef)dict, (CFTypeRef*) &dataResult);
+        
+            
+            if (status == noErr) {
+                NSData* result = (__bridge NSData*) dataResult;
+//                std::string val = std::string(static_cast<const char*>(result.bytes), result.length);
+                NSString* returnString = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
+                res.setProperty(rt, "value", [returnString UTF8String]);
+                return res;
+            }
+        
+            auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::to_string(status));
+            
+            res.setProperty(rt, "error", errorStr);
+            
+            return res;
         });
         
         jsi::Object module = jsi::Object(rt);
         
         module.setProperty(rt, "set", std::move(set));
+        module.setProperty(rt, "get", std::move(get));
         
         rt.global().setProperty(rt, "__OPSecureStoreProxy", std::move(module));
     }
@@ -154,93 +238,7 @@ namespace opsecurestorage {
 
 
 //
-//- (NSDictionary *)setItem:(NSString *)key value:(NSString *)value options:(JS::NativeTurboSecureStorage::SpecSetItemOptions &)options
-//{
-//    CFStringRef accessibility = kSecAttrAccessibleAfterFirstUnlock;
-//    
-//     if(options.accessibility()) {
-//         accessibility = [self getAccessibilityValue:options.accessibility()];
-//     }
-//    
-//    bool withBiometrics = options.biometricAuthentication().value();
-//    
-//    [self innerDelete:key withBiometrics:withBiometrics];
-//    
-//    NSMutableDictionary *dict = [self newDefaultDictionary:key];
-//    
-//    // kSecAttrAccessControl is mutually excluse with kSecAttrAccessible
-//    // https://mobile-security.gitbook.io/mobile-security-testing-guide/ios-testing-guide/0x06f-testing-local-authentication
-//    if(withBiometrics) {
-//        [dict setObject:(__bridge_transfer id)[self getBioSecAccessControl] forKey:(id)kSecAttrAccessControl];
-//    } else {
-//        [dict setObject:(__bridge id)accessibility forKey:(id)kSecAttrAccessible];
-//    }
-//    
-//    NSData* valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
-//    [dict setObject:valueData forKey:(id)kSecValueData];
-//
-//    OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
-//    
-//    if (status == noErr) {
-//        return @{};
-//    }
-//    
-//    return @{
-//        @"error": @"Could not save value",
-//    };
-//}
-//
-//- (NSDictionary *)getItem:(NSString *)key options:(JS::NativeTurboSecureStorage::SpecGetItemOptions &)options {
-//    NSMutableDictionary *dict = [self newDefaultDictionary:key];
-//    
-//    [dict setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
-//    [dict setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
-//    
-//    if(options.biometricAuthentication()) {
-//        BiometricsState biometricsState = getBiometricsState();
-//        LAContext *authContext = [[LAContext alloc] init];
-//        
-//        // If device has no passcode/faceID/touchID then wallet-core cannot read the value from memory
-//        if(biometricsState == kBiometricsStateNotAvailable) {
-//            return @{
-//                @"error": @"Biometrics not available"
-//            };
-//        }
-//        
-//        if(biometricsState == kBiometricsStateLocked) {
-//            
-//            // TODO receiving a localized string might be necessary if this is happening on production
-//            [authContext evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
-//                        localizedReason:@"You need to unlock your device"
-//                                  reply:^(BOOL success, NSError *error) {
-//                if (!success) {
-//                    // Edge case when device might locked out after too many password attempts
-//                    // User has failed to authenticate, but due to this being a callback cannot interrupt upper lexical scope
-//                    // We should somehow prompt/tell the user that it has failed to authenticate
-//                    // and wallet could not be loaded
-//                }
-//            }];
-//        }
-//
-//        [dict setObject:(__bridge id)[self getBioSecAccessControl] forKey:(id)kSecAttrAccessControl];
-//    }
-//    
-//    CFDataRef dataResult = nil;
-//    OSStatus status = SecItemCopyMatching((CFDictionaryRef)dict, (CFTypeRef*) &dataResult);
-//    
-//    if (status == noErr) {
-//        NSData* result = (__bridge NSData*) dataResult;
-//        NSString* returnString = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
-//        
-//        return @{
-//            @"value": returnString
-//        };
-//    }
-//    
-//    return @{
-//        @"error": @"Could not get value"
-//    };
-//}
+
 
 //
 //- (NSDictionary *)deleteItem:(NSString *)key options:(JS::NativeTurboSecureStorage::SpecDeleteItemOptions &)options {

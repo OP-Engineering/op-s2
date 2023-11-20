@@ -1,6 +1,6 @@
 //
 //  bindings.m
-//  op-engineering-op-secure-storage
+//  op-engineering-op-s2
 //
 //  Created by Oscar Franco on 19/11/23.
 //

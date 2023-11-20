@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "op-engineering-op-secure-storage.h"
+#include "op-engineering-op-s2.h"
 
 extern "C"
 JNIEXPORT jdouble JNICALL

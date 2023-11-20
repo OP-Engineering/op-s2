@@ -2603,9 +2603,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@op-engineering/op-secure-storage-example@workspace:example":
+"@op-engineering/op-s2-example@workspace:example":
   version: 0.0.0-use.local
-  resolution: "@op-engineering/op-secure-storage-example@workspace:example"
+  resolution: "@op-engineering/op-s2-example@workspace:example"
   dependencies:
     "@babel/core": ^7.20.0
     "@babel/preset-env": ^7.20.0
@@ -2619,9 +2619,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@op-engineering/op-secure-storage@workspace:.":
+"@op-engineering/op-s2@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@op-engineering/op-secure-storage@workspace:."
+  resolution: "@op-engineering/op-s2@workspace:."
   dependencies:
     "@commitlint/config-conventional": ^17.0.2
     "@evilmartians/lefthook": ^1.5.0

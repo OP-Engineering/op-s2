@@ -1,17 +1,17 @@
-# @op-engineering/op-secure-storage
+# @op-engineering/op-s2
 
 Modern secure storage for React Native
 
 ## Installation
 
 ```sh
-npm install @op-engineering/op-secure-storage
+npm install @op-engineering/op-s2
 ```
 
 ## Usage
 
 ```js
-import { multiply } from '@op-engineering/op-secure-storage';
+import { multiply } from '@op-engineering/op-s2';
 
 // ...
 

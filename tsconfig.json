@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "@op-engineering/op-secure-storage": ["./src/index"]
+      "@op-engineering/op-s2": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

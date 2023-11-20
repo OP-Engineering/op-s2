@@ -1,5 +1,5 @@
 {
-  "name": "@op-engineering/op-secure-storage-example",
+  "name": "@op-engineering/op-s2-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {

@@ -5,7 +5,7 @@ set (CMAKE_CXX_STANDARD 11)
 
 add_library(cpp
             SHARED
-            ../cpp/op-engineering-op-secure-storage.cpp
+            ../cpp/op-engineering-op-s2.cpp
             cpp-adapter.cpp
 )
 
