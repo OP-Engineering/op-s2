@@ -1,6 +1,7 @@
 #include "bindings.h"
 #include "macros.h"
 #include <jni.h>
+#include <iostream>
 
 namespace ops2 {
     namespace jsi = facebook::jsi;
@@ -20,7 +21,6 @@ namespace ops2 {
 
         auto set = HOSTFN("set", 1) {
             auto res = jsi::Object(rt);
-//            CFStringRef accessibility = kSecAttrAccessibleAfterFirstUnlock;
 
             if(count < 1) {
                 res.setProperty(rt, "error", "Params object is missing");
@@ -58,17 +58,14 @@ namespace ops2 {
                 withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
             }
 
-//            _delete(key, withBiometrics);
+            try {
+                _del(key.c_str(), withBiometrics);
 
-            _set(key.c_str(), val.c_str(), withBiometrics);
-
-//            if (status == noErr) {
-//                return res;
-//            }
-
-//            auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::to_string(status));
-//
-//            res.setProperty(rt, "error", errorStr);
+                _set(key.c_str(), val.c_str(), withBiometrics);
+            } catch(std::exception &e) {
+                auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::string(e.what()));
+                res.setProperty(rt, "error", errorStr);
+            }
 
             return res;
         });
@@ -98,11 +95,16 @@ namespace ops2 {
 
             auto res = jsi::Object(rt);
 
-            auto val = _get(key.c_str(), withBiometrics);
-            if(val.empty()) {
-                res.setProperty(rt, "error", "NOT FOUND");
-            } else {
-                res.setProperty(rt, "value", val);
+            try {
+                auto val = _get(key.c_str(), withBiometrics);
+                if(val.empty()) {
+                    res.setProperty(rt, "error", "NOT FOUND");
+                } else {
+                    res.setProperty(rt, "value", val);
+                }
+            } catch(std::exception &e) {
+                auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::string(e.what()));
+                res.setProperty(rt, "error", errorStr);
             }
 
             return res;

@@ -6,9 +6,11 @@ import java.util.concurrent.Semaphore;
 
 class TSSAuthenticationCallback(val mutex: Semaphore): BiometricPrompt.AuthenticationCallback() {
     var isAuthenticated = false
+    var errorStr: String = ""
 
     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-//        Log.e(Constants.TAG, "authentication error $errString")
+        Log.e("BLAH", "authentication error $errString")
+        errorStr = errString.toString();
         super.onAuthenticationError(errorCode, errString)
         mutex.release()
     }

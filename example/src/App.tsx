@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, Button } from 'react-native';
 import { getSetTests } from './tests/secureStore.spec';
 import { runTests } from './tests/MochaSetup';
 import { get, set } from '@op-engineering/op-s2';
@@ -93,6 +93,29 @@ export default function App() {
     return acc && r.type !== 'incorrect';
   }, true);
 
+  const setWithBiometrics = () => {
+    const { error } = set({
+      key: 'withBiometrics',
+      value: 'quack',
+      withBiometrics: true,
+    });
+
+    if (error) {
+      console.warn(error);
+    }
+  };
+
+  const getWithBiometrics = () => {
+    const { error, value } = get({
+      key: 'withBiometrics',
+      withBiometrics: true,
+    });
+
+    if (value) {
+      console.warn('got value', value);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <ScrollView className="flex-1">
@@ -120,6 +143,12 @@ export default function App() {
             </Text>
           </View>
         )}
+
+        <View className="flex-row p-2 bg-neutral-600 items-center">
+          <Text className={'text-lg flex-1  text-white'}>BIOMETRICS</Text>
+        </View>
+        <Button title="Set with biometrics" onPress={setWithBiometrics} />
+        <Button title="Get with biometrics" onPress={getWithBiometrics} />
 
         <View className="flex-row p-2 mt-4 bg-neutral-600 items-center">
           <Text className={'text-lg flex-1  text-white'}>ALL TESTS</Text>

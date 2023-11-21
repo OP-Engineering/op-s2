@@ -6,6 +6,7 @@
 #include <jsi/jsi.h>
 #include <typeinfo>
 #include "bindings.h"
+#include <iostream>
 
 namespace jni = facebook::jni;
 namespace react = facebook::react;
@@ -111,7 +112,22 @@ void set(const char* key, const char* value, bool withBiometrics)
     params[1].l = jVal;
     params[2].z = withBiometrics;
 
+
     jniEnv->CallVoidMethodA(java_object, mid, params);
+
+    jthrowable exObj = jniEnv->ExceptionOccurred();
+    if(exObj) {
+        jniEnv->ExceptionClear();
+
+        jclass clazz = jniEnv->GetObjectClass(exObj);
+        jmethodID getMessage = jniEnv->GetMethodID(clazz,
+                                                "toString",
+                                                "()Ljava/lang/String;");
+        jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
+        const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
+        throw std::runtime_error(std::string(mstr));
+    }
+
 }
 
 std::string get(const char* key, bool withBiometrics)
@@ -126,6 +142,19 @@ std::string get(const char* key, bool withBiometrics)
 
 
     jstring result = (jstring)jniEnv->CallObjectMethodA(java_object, mid, params);
+    jthrowable exObj = jniEnv->ExceptionOccurred();
+    if(exObj) {
+        jniEnv->ExceptionClear();
+
+        jclass clazz = jniEnv->GetObjectClass(exObj);
+        jmethodID getMessage = jniEnv->GetMethodID(clazz,
+                                                   "toString",
+                                                   "()Ljava/lang/String;");
+        jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
+        const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
+        throw std::runtime_error(std::string(mstr));
+    }
+
     if (result == NULL)
     {
         // TODO revisit this
