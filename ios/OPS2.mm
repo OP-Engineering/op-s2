@@ -27,7 +27,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install)
     auto callInvoker = bridge.jsCallInvoker;
     
     
-    opsecurestorage::install(runtime, callInvoker);
+    ops2::install(runtime, callInvoker);
     
     return @true;
 }

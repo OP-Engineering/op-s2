@@ -11,6 +11,8 @@ add_library(
   SHARED
   ../cpp/logs.h
   ../cpp/macros.h
+  bindings.h
+  bindings.cpp
   cpp-adapter.cpp
 )
 

@@ -4,7 +4,7 @@
 #import "macros.h"
 
 
-namespace opsecurestorage {
+namespace ops2 {
     namespace jsi = facebook::jsi;
 
     typedef enum {

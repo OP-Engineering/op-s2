@@ -4,8 +4,12 @@ buildscript {
     mavenCentral()
   }
 
+  def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["OPS2_kotlinVersion"]
+
   dependencies {
     classpath "com.android.tools.build:gradle:7.2.1"
+    // noinspection DifferentKotlinGradleVersion
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
@@ -14,6 +18,7 @@ def isNewArchitectureEnabled() {
 }
 
 apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
 
 def resolveBuildType() {
     Gradle gradle = getGradle()
@@ -45,7 +50,7 @@ def supportsNamespace() {
 
 android {
   if (supportsNamespace()) {
-    namespace "com.opengineering.OPS2"
+    namespace "com.op.s2"
 
     sourceSets {
       main {
@@ -114,6 +119,7 @@ repositories {
   google()
 }
 
+def kotlin_version = getExtOrDefault("kotlinVersion")
 
 dependencies {
   // For < 0.71, this will be from the local maven repo
@@ -122,6 +128,7 @@ dependencies {
   implementation "com.facebook.react:react-native:+"
   implementation("androidx.security:security-crypto:1.1.0-alpha06")
   implementation("androidx.biometric:biometric:1.2.0-alpha05")
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
