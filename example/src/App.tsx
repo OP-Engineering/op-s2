@@ -106,7 +106,7 @@ export default function App() {
   };
 
   const getWithBiometrics = () => {
-    const { error, value } = get({
+    const { value } = get({
       key: 'withBiometrics',
       withBiometrics: true,
     });
