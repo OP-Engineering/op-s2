@@ -59,8 +59,6 @@ namespace ops2 {
             }
 
             try {
-                _del(key.c_str(), withBiometrics);
-
                 _set(key.c_str(), val.c_str(), withBiometrics);
             } catch(std::exception &e) {
                 auto errorStr = jsi::String::createFromUtf8(rt, "op-s2 could not set value, error code: " + std::string(e.what()));
