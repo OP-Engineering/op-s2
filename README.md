@@ -1,4 +1,4 @@
-![Header](header.png)
+![Header](Header.png)
 
 <pre align="center">yarn add @op-engineering/op-s2</pre>
 
