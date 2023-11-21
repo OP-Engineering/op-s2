@@ -15,7 +15,7 @@
 
 ---
 
-Modern encryption module for React Native. Uses `Keychain` on iOS and the [official libraries](https://developer.android.com/jetpack/androidx/releases/security), `KeyStore`/`EncryptedSharedPreferences`, on Android. It uses hardware backed-up encryption when possible, as well as JSI bindings for speed. It also supports Biometric authentication.
+Modern encryption module for React Native. Uses `Keychain` on iOS and the [official libraries](https://developer.android.com/jetpack/androidx/releases/security), `KeyStore`/`EncryptedSharedPreferences`, on Android. It uses hardware backed-up encryption (when possible, depending on the Android vendors' implementation), as well as JSI bindings for speed. It also supports Biometric authentication.
 
 Created by [ospfranco](https://github.com/sponsors/ospfranco)
 
