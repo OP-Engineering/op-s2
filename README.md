@@ -58,7 +58,7 @@ On iOS you can specify an accessibility value which allows you to customize when
 
 - [ ] Add `getAllKeys`, `getAllItems` and `deleteAllItems` methods (if possible)
 - [ ] Support Secure Enclave on Apple devices
-- [ ] Create device testing list
+- [ ] Device testing list
 - [ ] Security audits
 
 ## License

@@ -30,7 +30,7 @@
 		00E356EE1AD99517003FC87E /* OpSecureStorageExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpSecureStorageExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* OpSecureStorageExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OpSecureStorageExampleTests.m; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* OpSecureStorageExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpSecureStorageExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* OP-S2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OP-S2.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = OpSecureStorageExample/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = OpSecureStorageExample/AppDelegate.mm; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = OpSecureStorageExample/Images.xcassets; sourceTree = "<group>"; };
@@ -131,7 +131,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* OpSecureStorageExample.app */,
+				13B07F961A680F5B00A75B9A /* OP-S2.app */,
 				00E356EE1AD99517003FC87E /* OpSecureStorageExampleTests.xctest */,
 			);
 			name = Products;
@@ -191,7 +191,7 @@
 			);
 			name = OpSecureStorageExample;
 			productName = OpSecureStorageExample;
-			productReference = 13B07F961A680F5B00A75B9A /* OpSecureStorageExample.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* OP-S2.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -502,7 +502,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.op.s2;
-				PRODUCT_NAME = OpSecureStorageExample;
+				PRODUCT_NAME = "OP-S2";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -532,7 +532,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.op.s2;
-				PRODUCT_NAME = OpSecureStorageExample;
+				PRODUCT_NAME = "OP-S2";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";

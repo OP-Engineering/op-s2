@@ -10,10 +10,15 @@ export function getSetTests() {
   describe('securely storage/retrieve', () => {
     it('set/get', () => {
       const key = 'key1';
-      set({
+      const { error: setError } = set({
         key,
         value: 'myTestValue',
       });
+
+      if (setError) {
+        console.warn(setError);
+      }
+      expect(setError).to.be.undefined;
 
       const { value, error } = get({
         key,
