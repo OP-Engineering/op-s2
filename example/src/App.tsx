@@ -5,6 +5,15 @@ import { runTests } from './tests/MochaSetup';
 import { get, set } from '@op-engineering/op-s2';
 import performance from 'react-native-performance';
 import { MMKV } from 'react-native-mmkv';
+import { open as openDB } from '@op-engineering/op-sqlcipher';
+
+const db = openDB({
+  name: 'test',
+  encryptionKey: 'testKey',
+});
+
+db.execute('DROP TABLE IF EXISTS Test;');
+db.execute('CREATE TABLE Test (v1 TEXT) STRICT;');
 
 const ITERATION_COUNT = 1;
 
@@ -26,66 +35,60 @@ export default function App() {
   }, []);
 
   const runBenchmarks = async () => {
-    let writeVals = [];
     let totalStart = performance.now();
     for (let i = 0; i < ITERATION_COUNT; i++) {
-      const start = performance.now();
       set({
         key: 'benchmarkKey',
         value: 'blah',
       });
-      const end = performance.now();
-      writeVals.push(end - start);
     }
     let totalEnd = performance.now();
     let s2totalWrite = totalEnd - totalStart;
 
     totalStart = performance.now();
-    let readVals = [];
     for (let i = 0; i < ITERATION_COUNT; i++) {
-      const start = performance.now();
       get({
         key: 'benchmarkKey',
       });
-      const end = performance.now();
-      readVals.push(end - start);
     }
     totalEnd = performance.now();
     let s2totalRead = totalEnd - totalStart;
 
     totalStart = performance.now();
-    let mmkvWriteVals = [];
     for (let i = 0; i < ITERATION_COUNT; i++) {
-      const start = performance.now();
       mmkv.set('benchmarkKey', 'quack');
-      const end = performance.now();
-      mmkvWriteVals.push(end - start);
     }
     totalEnd = performance.now();
     let mmkvTotalWrite = totalEnd - totalStart;
 
     totalStart = performance.now();
-    let mmkvReadVals = [];
     for (let i = 0; i < ITERATION_COUNT; i++) {
-      const start = performance.now();
       mmkv.getString('benchmarkKey');
-      const end = performance.now();
-      mmkvReadVals.push(end - start);
     }
     totalEnd = performance.now();
     let mmkvTotalRead = totalEnd - totalStart;
 
+    totalStart = performance.now();
+    for (let i = 0; i < ITERATION_COUNT; i++) {
+      db.execute('INSERT INTO "Test" (v1) VALUES(?)', ['quack']);
+    }
+    totalEnd = performance.now();
+    let sqliteWrite = totalEnd - totalStart;
+
+    totalStart = performance.now();
+    for (let i = 0; i < ITERATION_COUNT; i++) {
+      db.execute('SELECT * FROM Test;');
+    }
+    totalEnd = performance.now();
+    let sqliteRead = totalEnd - totalStart;
+
     return {
-      s2write: writeVals.reduce((acc, n) => acc + n, 0) / writeVals.length,
-      s2read: readVals.reduce((acc, n) => acc + n, 0) / readVals.length,
       s2totalWrite,
       s2totalRead,
-      mmkvWrite:
-        mmkvWriteVals.reduce((acc, n) => acc + n, 0) / mmkvWriteVals.length,
-      mmkvRead:
-        mmkvReadVals.reduce((acc, n) => acc + n, 0) / mmkvReadVals.length,
       mmkvTotalWrite,
       mmkvTotalRead,
+      sqliteWrite,
+      sqliteRead,
     };
   };
 
@@ -128,18 +131,27 @@ export default function App() {
           <View className="p-2">
             <Text className="text-white font-bold">OP-S2</Text>
             <Text className="text-white">
-              Write {benchmarks.s2write.toFixed(2)}ms.
+              Write {benchmarks.s2totalWrite.toFixed(2)}ms.
             </Text>
 
             <Text className="text-white">
-              Read {benchmarks.s2read.toFixed(2)}ms.
+              Read {benchmarks.s2totalRead.toFixed(2)}ms.
             </Text>
+
             <Text className="text-white font-bold mt-4">MMKV</Text>
             <Text className="text-white">
-              Write {benchmarks.mmkvWrite.toFixed(2)}ms.
+              Write {benchmarks.mmkvTotalWrite.toFixed(2)}ms.
             </Text>
             <Text className="text-white">
-              Read {benchmarks.mmkvRead.toFixed(2)}ms.
+              Read {benchmarks.mmkvTotalRead.toFixed(2)}ms.
+            </Text>
+
+            <Text className="text-white font-bold mt-4">SQLCipher</Text>
+            <Text className="text-white">
+              Write {benchmarks.sqliteWrite.toFixed(2)}ms.
+            </Text>
+            <Text className="text-white">
+              Read {benchmarks.sqliteRead.toFixed(2)}ms.
             </Text>
           </View>
         )}

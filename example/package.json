@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
+    "@op-engineering/op-sqlcipher": "^1.0.12",
     "chai": "^4.3.10",
     "events": "^3.3.0",
     "mocha": "^10.2.0",
