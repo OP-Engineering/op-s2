@@ -3,7 +3,6 @@
 #import <Security/Security.h>
 #import "macros.h"
 
-
 namespace ops2 {
     namespace jsi = facebook::jsi;
 
