@@ -22,6 +22,12 @@ PODS:
     - React
     - React-callinvoker
     - React-Core
+  - op-sqlcipher (1.0.12):
+    - OpenSSL-Universal
+    - React
+    - React-callinvoker
+    - React-Core
+  - OpenSSL-Universal (1.1.2200)
   - RCT-Folly (2021.07.22.00):
     - boost
     - DoubleConversion
@@ -449,6 +455,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
   - op-s2 (from `../..`)
+  - "op-sqlcipher (from `../node_modules/@op-engineering/op-sqlcipher`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
   - RCTTypeSafety (from `../node_modules/react-native/Libraries/TypeSafety`)
@@ -492,6 +499,7 @@ SPEC REPOS:
     - libevent
     - MMKV
     - MMKVCore
+    - OpenSSL-Universal
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -510,6 +518,8 @@ EXTERNAL SOURCES:
     :tag: hermes-2023-08-07-RNv0.72.4-813b2def12bc9df02654b3e3653ae4a68d0572e0
   op-s2:
     :path: "../.."
+  op-sqlcipher:
+    :path: "../node_modules/@op-engineering/op-sqlcipher"
   RCT-Folly:
     :podspec: "../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTRequired:
@@ -593,6 +603,8 @@ SPEC CHECKSUMS:
   MMKV: 5a07930c70c70b86cd87761a42c8f3836fb681d7
   MMKVCore: e50135dbd33235b6ab390635991bab437ab873c0
   op-s2: 33a609d9c229139086c89a1adfd25015da16af96
+  op-sqlcipher: 942094df9914318a1c81f21e1a341bbb2aafb483
+  OpenSSL-Universal: 6e1ae0555546e604dbc632a2b9a24a9c46c41ef6
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 83bca1c184feb4d2e51c72c8369b83d641443f95
   RCTTypeSafety: 13c4a87a16d7db6cd66006ce9759f073402ef85b
