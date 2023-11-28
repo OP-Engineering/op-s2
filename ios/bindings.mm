@@ -1,7 +1,7 @@
 #include "bindings.h"
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <Security/Security.h>
-#import "macros.h"
+#import "../cpp/macros.h"
 
 
 namespace ops2 {
