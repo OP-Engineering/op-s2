@@ -15,8 +15,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/OP-Engineering/op-s2.git", :tag => "#{s.version}" }
 
   s.pod_target_xcconfig = {
-    :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
-    :USE_HEADERMAP => "No"
+    :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations"
   }
 
   s.header_mappings_dir = "cpp"
