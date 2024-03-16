@@ -15,14 +15,14 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.7)
   - hermes-engine/Pre-built (0.72.7)
   - libevent (2.1.12)
-  - MMKV (1.3.1):
-    - MMKVCore (~> 1.3.1)
-  - MMKVCore (1.3.1)
-  - op-s2 (0.1.0):
+  - MMKV (1.3.4):
+    - MMKVCore (~> 1.3.4)
+  - MMKVCore (1.3.4)
+  - op-s2 (0.1.1):
     - React
     - React-callinvoker
     - React-Core
-  - op-sqlcipher (1.0.12):
+  - op-sqlcipher (1.0.15):
     - OpenSSL-Universal
     - React
     - React-callinvoker
@@ -328,10 +328,11 @@ PODS:
   - React-jsinspector (0.72.7)
   - React-logger (0.72.7):
     - glog
-  - react-native-mmkv (2.11.0):
-    - MMKV (>= 1.2.13)
+  - react-native-mmkv (2.12.2):
+    - MMKV (>= 1.3.3)
+    - RCT-Folly (= 2021.07.22.00)
     - React-Core
-  - react-native-performance (5.1.0):
+  - react-native-performance (5.1.2):
     - React-Core
   - React-NativeModulesApple (0.72.7):
     - hermes-engine
@@ -600,10 +601,10 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 9180d43df05c1ed658a87cc733dc3044cf90c00a
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  MMKV: 5a07930c70c70b86cd87761a42c8f3836fb681d7
-  MMKVCore: e50135dbd33235b6ab390635991bab437ab873c0
-  op-s2: 913bfb06ea652a5e441991924d0dfe335aea75ee
-  op-sqlcipher: 942094df9914318a1c81f21e1a341bbb2aafb483
+  MMKV: ed58ad794b3f88c24d604a5b74f3fba17fcbaf74
+  MMKVCore: a67a1cede26175c413176f404a7cedec43f96a0b
+  op-s2: 46ccfb9aed09c4557c08e96b666671250f452401
+  op-sqlcipher: 1818c91d82b0464ae50d9c0c8a613d216d989d12
   OpenSSL-Universal: 6e1ae0555546e604dbc632a2b9a24a9c46c41ef6
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 83bca1c184feb4d2e51c72c8369b83d641443f95
@@ -620,8 +621,8 @@ SPEC CHECKSUMS:
   React-jsiexecutor: c49502e5d02112247ee4526bc3ccfc891ae3eb9b
   React-jsinspector: 8baadae51f01d867c3921213a25ab78ab4fbcd91
   React-logger: 8edc785c47c8686c7962199a307015e2ce9a0e4f
-  react-native-mmkv: e97c0c79403fb94577e5d902ab1ebd42b0715b43
-  react-native-performance: cef2b618d47b277fb5c3280b81a3aad1e72f2886
+  react-native-mmkv: 38d484ccd8f5760fe0e46d206ed07add5ddda1fc
+  react-native-performance: ff93f8af3b2ee9519fd7879896aa9b8b8272691d
   React-NativeModulesApple: b6868ee904013a7923128892ee4a032498a1024a
   React-perflogger: 31ea61077185eb1428baf60c0db6e2886f141a5a
   React-RCTActionSheet: 392090a3abc8992eb269ef0eaa561750588fc39d
@@ -644,4 +645,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: ac916a513b83d56c92a4ce59ff0dc1b9447ce757
 
-COCOAPODS: 1.13.0
+COCOAPODS: 1.15.2
