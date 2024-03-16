@@ -127,7 +127,7 @@ class OPS2Bridge(reactContext: ReactApplicationContext) {
   }
 
   fun install(context: ReactContext) {
-      val jsContextPointer = context.javaScriptContextHolder.get()
+      val jsContextPointer = context.javaScriptContextHolder!!.get()
 
       initialize(
           jsContextPointer,
