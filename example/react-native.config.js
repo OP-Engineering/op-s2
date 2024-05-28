@@ -6,5 +6,5 @@ module.exports = {
     [pak.name]: {
       root: path.join(__dirname, '..'),
     },
-  }
+  },
 };
