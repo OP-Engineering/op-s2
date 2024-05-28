@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-s2",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Modern secure storage for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
-    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish"
+    "release": "./bump-version.sh && npm publish"
   },
   "keywords": [
     "react-native",
