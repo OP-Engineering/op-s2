@@ -1,7 +1,6 @@
 import { NativeModules } from 'react-native';
 
 declare global {
-  function nativeCallSyncHook(): unknown;
   var __OPS2Proxy: OPS2 | undefined;
 }
 
@@ -12,8 +11,7 @@ if (global.__OPS2Proxy == null) {
     throw new Error('Base module not found. Maybe try rebuilding the app.');
   }
 
-  // Check if we are running on-device (JSI)
-  if (global.nativeCallSyncHook == null || OPS2.install == null) {
+  if (OPS2.install == null) {
     throw new Error(
       'Failed to install op-s2: React Native is not running on-device.'
     );
@@ -33,6 +31,8 @@ if (global.__OPS2Proxy == null) {
       'Failed to install op-s2, the native initializer function does not exist. Are you trying to use OPS2 from different JS Runtimes?'
     );
   }
+
+  console.log('OPS2 installed successfully');
 }
 
 const proxy = global.__OPS2Proxy;
