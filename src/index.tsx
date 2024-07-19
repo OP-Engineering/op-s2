@@ -31,8 +31,6 @@ if (global.__OPS2Proxy == null) {
       'Failed to install op-s2, the native initializer function does not exist. Are you trying to use OPS2 from different JS Runtimes?'
     );
   }
-
-  console.log('OPS2 installed successfully');
 }
 
 const proxy = global.__OPS2Proxy;
