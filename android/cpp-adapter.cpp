@@ -1,15 +1,17 @@
-#include "bindings.h"
+#include <jni.h>
 #include "logs.h"
 #include <ReactCommon/CallInvokerHolder.h>
 #include <fbjni/fbjni.h>
-#include <iostream>
 #include <jni.h>
 #include <jsi/jsi.h>
 #include <typeinfo>
+#include "bindings.h"
+#include <iostream>
 
 namespace jni = facebook::jni;
 namespace react = facebook::react;
 namespace jsi = facebook::jsi;
+
 
 JavaVM *java_vm;
 jclass java_class;
@@ -21,36 +23,40 @@ jobject java_object;
  * See https://stackoverflow.com/a/30026231 for detailed explanation
  */
 
-void DeferThreadDetach(JNIEnv *env) {
-  static pthread_key_t thread_key;
+void DeferThreadDetach(JNIEnv *env)
+{
+    static pthread_key_t thread_key;
 
-  // Set up a Thread Specific Data key, and a callback that
-  // will be executed when a thread is destroyed.
-  // This is only done once, across all threads, and the value
-  // associated with the key for any given thread will initially
-  // be NULL.
-  static auto run_once = [] {
-    const auto err = pthread_key_create(&thread_key, [](void *ts_env) {
-      if (ts_env) {
-        java_vm->DetachCurrentThread();
-      }
-    });
-    if (err) {
-      // Failed to create TSD key. Throw an exception if you want to.
-    }
-    return 0;
-  }();
+    // Set up a Thread Specific Data key, and a callback that
+    // will be executed when a thread is destroyed.
+    // This is only done once, across all threads, and the value
+    // associated with the key for any given thread will initially
+    // be NULL.
+    static auto run_once = []
+    {
+        const auto err = pthread_key_create(&thread_key, [](void *ts_env)
+        {
+            if (ts_env) {
+                java_vm->DetachCurrentThread();
+            } });
+        if (err)
+        {
+            // Failed to create TSD key. Throw an exception if you want to.
+        }
+        return 0;
+    }();
 
-  // For the callback to actually be executed when a thread exits
-  // we need to associate a non-NULL value with the key on that thread.
-  // We can use the JNIEnv* as that value.
-  const auto ts_env = pthread_getspecific(thread_key);
-  if (!ts_env) {
-    if (pthread_setspecific(thread_key, env)) {
-      // Failed to set thread-specific value for key. Throw an exception if you
-      // want to.
+    // For the callback to actually be executed when a thread exits
+    // we need to associate a non-NULL value with the key on that thread.
+    // We can use the JNIEnv* as that value.
+    const auto ts_env = pthread_getspecific(thread_key);
+    if (!ts_env)
+    {
+        if (pthread_setspecific(thread_key, env))
+        {
+            // Failed to set thread-specific value for key. Throw an exception if you want to.
+        }
     }
-  }
 }
 
 /**
@@ -62,111 +68,127 @@ void DeferThreadDetach(JNIEnv *env) {
  *
  * See https://stackoverflow.com/a/30026231 for detailed explanation
  */
-JNIEnv *GetJniEnv() {
-  JNIEnv *env = nullptr;
-  // We still call GetEnv first to detect if the thread already
-  // is attached. This is done to avoid setting up a DetachCurrentThread
-  // call on a Java thread.
+JNIEnv *GetJniEnv()
+{
+    JNIEnv *env = nullptr;
+    // We still call GetEnv first to detect if the thread already
+    // is attached. This is done to avoid setting up a DetachCurrentThread
+    // call on a Java thread.
 
-  // g_vm is a global.
-  auto get_env_result = java_vm->GetEnv((void **)&env, JNI_VERSION_1_6);
-  if (get_env_result == JNI_EDETACHED) {
-    if (java_vm->AttachCurrentThread(&env, NULL) == JNI_OK) {
-      DeferThreadDetach(env);
-    } else {
-      // Failed to attach thread. Throw an exception if you want to.
+    // g_vm is a global.
+    auto get_env_result = java_vm->GetEnv((void **)&env, JNI_VERSION_1_6);
+    if (get_env_result == JNI_EDETACHED)
+    {
+        if (java_vm->AttachCurrentThread(&env, NULL) == JNI_OK)
+        {
+            DeferThreadDetach(env);
+        }
+        else
+        {
+            // Failed to attach thread. Throw an exception if you want to.
+        }
     }
-  } else if (get_env_result == JNI_EVERSION) {
-    // Unsupported JNI version. Throw an exception if you want to.
-  }
-  return env;
+    else if (get_env_result == JNI_EVERSION)
+    {
+        // Unsupported JNI version. Throw an exception if you want to.
+    }
+    return env;
 }
 
-jstring string2jstring(JNIEnv *env, const char *str) {
-  return (*env).NewStringUTF(str);
+jstring string2jstring(JNIEnv *env, const char *str)
+{
+    return (*env).NewStringUTF(str);
 }
 
-void set(const char *key, const char *value, bool withBiometrics) {
-  JNIEnv *jniEnv = GetJniEnv();
-  java_class = jniEnv->GetObjectClass(java_object);
-  jmethodID mid = jniEnv->GetMethodID(
-      java_class, "setItem", "(Ljava/lang/String;Ljava/lang/String;Z)V");
-  jstring jKey = string2jstring(jniEnv, key);
-  jstring jVal = string2jstring(jniEnv, value);
-  jvalue params[3];
-  params[0].l = jKey;
-  params[1].l = jVal;
-  params[2].z = withBiometrics;
+void set(const char* key, const char* value, bool withBiometrics)
+{
+    JNIEnv *jniEnv = GetJniEnv();
+    java_class = jniEnv->GetObjectClass(java_object);
+    jmethodID mid = jniEnv->GetMethodID(java_class, "setItem", "(Ljava/lang/String;Ljava/lang/String;Z)V");
+    jstring jKey = string2jstring(jniEnv, key);
+    jstring jVal = string2jstring(jniEnv, value);
+    jvalue params[3];
+    params[0].l = jKey;
+    params[1].l = jVal;
+    params[2].z = withBiometrics;
 
-  jniEnv->CallVoidMethodA(java_object, mid, params);
 
-  jthrowable exObj = jniEnv->ExceptionOccurred();
-  if (exObj) {
-    jniEnv->ExceptionClear();
+    jniEnv->CallVoidMethodA(java_object, mid, params);
 
-    jclass clazz = jniEnv->GetObjectClass(exObj);
-    jmethodID getMessage =
-        jniEnv->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
-    jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
-    const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
-    throw std::runtime_error(std::string(mstr));
-  }
+    jthrowable exObj = jniEnv->ExceptionOccurred();
+    if(exObj) {
+        jniEnv->ExceptionClear();
+
+        jclass clazz = jniEnv->GetObjectClass(exObj);
+        jmethodID getMessage = jniEnv->GetMethodID(clazz,
+                                                "toString",
+                                                "()Ljava/lang/String;");
+        jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
+        const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
+        throw std::runtime_error(std::string(mstr));
+    }
+
 }
 
-std::string get(const char *key, bool withBiometrics) {
-  JNIEnv *jniEnv = GetJniEnv();
-  java_class = jniEnv->GetObjectClass(java_object);
-  jmethodID mid = jniEnv->GetMethodID(
-      java_class, "getItem", "(Ljava/lang/String;Z)Ljava/lang/String;");
-  jstring jKey = string2jstring(jniEnv, key);
-  jvalue params[3];
-  params[0].l = jKey;
-  params[1].z = withBiometrics;
+std::string get(const char* key, bool withBiometrics)
+{
+    JNIEnv *jniEnv = GetJniEnv();
+    java_class = jniEnv->GetObjectClass(java_object);
+    jmethodID mid = jniEnv->GetMethodID(java_class, "getItem", "(Ljava/lang/String;Z)Ljava/lang/String;");
+    jstring jKey = string2jstring(jniEnv, key);
+    jvalue params[3];
+    params[0].l = jKey;
+    params[1].z = withBiometrics;
 
-  jstring result = (jstring)jniEnv->CallObjectMethodA(java_object, mid, params);
-  jthrowable exObj = jniEnv->ExceptionOccurred();
-  if (exObj) {
-    jniEnv->ExceptionClear();
 
-    jclass clazz = jniEnv->GetObjectClass(exObj);
-    jmethodID getMessage =
-        jniEnv->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
-    jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
-    const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
-    throw std::runtime_error(std::string(mstr));
-  }
+    jstring result = (jstring)jniEnv->CallObjectMethodA(java_object, mid, params);
+    jthrowable exObj = jniEnv->ExceptionOccurred();
+    if(exObj) {
+        jniEnv->ExceptionClear();
 
-  if (result == NULL) {
-    // TODO revisit this
-    return "";
-  }
+        jclass clazz = jniEnv->GetObjectClass(exObj);
+        jmethodID getMessage = jniEnv->GetMethodID(clazz,
+                                                   "toString",
+                                                   "()Ljava/lang/String;");
+        jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
+        const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
+        throw std::runtime_error(std::string(mstr));
+    }
 
-  std::string str = jniEnv->GetStringUTFChars(result, NULL);
-  return str;
+    if (result == NULL)
+    {
+        // TODO revisit this
+        return "";
+    }
+
+    std::string str = jniEnv->GetStringUTFChars(result, NULL);
+    return str;
 }
 
-void del(const char *key, bool withBiometrics) {
-  JNIEnv *jniEnv = GetJniEnv();
-  java_class = jniEnv->GetObjectClass(java_object);
-  jmethodID mid =
-      jniEnv->GetMethodID(java_class, "deleteItem", "(Ljava/lang/String;Z)V");
-  jstring jKey = string2jstring(jniEnv, key);
-  jvalue params[2];
-  params[0].l = jKey;
-  params[1].z = withBiometrics;
+void del(const char* key, bool withBiometrics)
+{
+    JNIEnv *jniEnv = GetJniEnv();
+    java_class = jniEnv->GetObjectClass(java_object);
+    jmethodID mid = jniEnv->GetMethodID(java_class, "deleteItem", "(Ljava/lang/String;Z)V");
+    jstring jKey = string2jstring(jniEnv, key);
+    jvalue params[2];
+    params[0].l = jKey;
+    params[1].z = withBiometrics;
 
-  jniEnv->CallVoidMethodA(java_object, mid, params);
+    jniEnv->CallVoidMethodA(java_object, mid, params);
 }
 
-extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
-  java_vm = jvm;
-  return JNI_VERSION_1_6;
+extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
+{
+    java_vm = jvm;
+    return JNI_VERSION_1_6;
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C"
+JNIEXPORT void JNICALL
 Java_com_op_s2_OPS2Bridge_initialize(JNIEnv *env, jobject thiz, jlong jsi_ptr) {
-  auto rt = reinterpret_cast<jsi::Runtime *>(jsi_ptr);
-  java_object = env->NewGlobalRef(thiz);
+    auto rt = reinterpret_cast<jsi::Runtime *>(jsi_ptr);
+    java_object = env->NewGlobalRef(thiz);
 
-  ops2::install(*rt, &set, &get, &del);
+    ops2::install(*rt, &set, &get, &del);
 }
