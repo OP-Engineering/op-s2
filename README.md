@@ -19,6 +19,10 @@ Modern encryption module for React Native. Uses `Keychain` on iOS and the [offic
 
 Created by [ospfranco](https://github.com/sponsors/ospfranco).
 
+Join the Discord
+
+https://discord.gg/W9XmqCQCKP
+
 ## Motivation
 
 Other React Native stores hand-roll their encryption, via OpenSSL (does not use hardware when possible) or raw implementation of algorithms (outdated algorithms or improper implementations).
