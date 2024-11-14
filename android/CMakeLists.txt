@@ -32,12 +32,23 @@ find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
 
-target_link_libraries(
-  ${PACKAGE_NAME}
-  ${LOG_LIB}
-  fbjni::fbjni
-  ReactAndroid::jsi
-  ReactAndroid::turbomodulejsijni
-  ReactAndroid::react_nativemodule_core
-  android
-)
+if(ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+  target_link_libraries(
+    ${PACKAGE_NAME}
+    ${LOG_LIB}
+    fbjni::fbjni
+    ReactAndroid::jsi
+    ReactAndroid::reactnative
+    android
+  )
+else()
+  target_link_libraries(
+    ${PACKAGE_NAME}
+    ${LOG_LIB}
+    fbjni::fbjni
+    ReactAndroid::jsi
+    ReactAndroid::turbomodulejsijni
+    ReactAndroid::react_nativemodule_core
+    android
+  )
+endif()
