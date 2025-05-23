@@ -7,7 +7,7 @@ PODS:
   - hermes-engine (0.74.1):
     - hermes-engine/Pre-built (= 0.74.1)
   - hermes-engine/Pre-built (0.74.1)
-  - op-s2 (0.1.7):
+  - op-s2 (0.1.11):
     - React
     - React-callinvoker
     - React-Core
@@ -1354,7 +1354,7 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 16b8530de1b383cdada1476cf52d1b52f0692cbc
-  op-s2: 85aae58d8e6f2f0d3db4f4061facc06f1946a7d0
+  op-s2: 53ddadcb563252f1f4210ebba092255762829548
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: efb313d8126259e9294dc4ee0002f44a6f676aba
   RCTRequired: f49ea29cece52aee20db633ae7edc4b271435562
@@ -1407,4 +1407,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 2ba3f4ae74a3a795b9b3dba32c22c6668c85399b
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

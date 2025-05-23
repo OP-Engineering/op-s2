@@ -39,13 +39,15 @@ SecAccessControlRef getBioSecAccessControl() {
       nil);                          // Error pointer
 }
 
-NSMutableDictionary *newDefaultDictionary(std::string key) {
+NSMutableDictionary *get_base_entry_dict(std::string key) {
   NSMutableDictionary *queryDictionary = [[NSMutableDictionary alloc] init];
   [queryDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
+
   NSData *encodedIdentifier = [NSData dataWithBytes:key.data()
                                              length:key.length()];
   [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrGeneric];
   [queryDictionary setObject:encodedIdentifier forKey:(id)kSecAttrAccount];
+
   [queryDictionary setObject:[[NSBundle mainBundle] bundleIdentifier]
                       forKey:(id)kSecAttrService];
 
@@ -74,12 +76,41 @@ CFStringRef getAccessibilityValue(int accessibility) {
 }
 
 void _delete(std::string &key, bool withBiometrics) {
-  NSMutableDictionary *dict = newDefaultDictionary(key);
+  NSMutableDictionary *dict = get_base_entry_dict(key);
   if (withBiometrics) {
     [dict setObject:(__bridge id)getBioSecAccessControl()
              forKey:(id)kSecAttrAccessControl];
   }
   SecItemDelete((CFDictionaryRef)dict);
+}
+
+std::string getSecurityErrorMessage(OSStatus status) {
+  switch (status) {
+    case noErr:
+      return "";
+    case errSecDuplicateItem:
+      return "[op-s2] Could not set value, duplicate item";
+    case errSecItemNotFound:
+      return "[op-s2] Item not found";
+    case errSecUserCanceled:
+      return "[op-s2] User cancelled authentication";
+    case errSecAuthFailed:
+      return "[op-s2] Authentication failed";
+    case errSecInteractionNotAllowed:
+      return "[op-s2] User interaction not allowed";
+    case errSecMissingEntitlement:
+      return "[op-s2] Missing entitlement";
+    default:
+      return "[op-s2] Security error code: " + std::to_string(status) + ". Look up code error at https://www.osstatus.com/";
+  }
+}
+
+void setSecurityError(jsi::Runtime &rt, jsi::Object &res, OSStatus status) {
+  if (status != noErr) {
+    std::string errorMessage = getSecurityErrorMessage(status);
+    auto errorStr = jsi::String::createFromUtf8(rt, errorMessage);
+    res.setProperty(rt, "error", errorStr);
+  }
 }
 
 void install(jsi::Runtime &rt,
@@ -133,7 +164,7 @@ void install(jsi::Runtime &rt,
 
     _delete(key, withBiometrics);
 
-    NSMutableDictionary *dict = newDefaultDictionary(key);
+    NSMutableDictionary *dict = get_base_entry_dict(key);
 
     // kSecAttrAccessControl is mutually excluse with kSecAttrAccessible
     // https://mobile-security.gitbook.io/mobile-security-testing-guide/ios-testing-guide/0x06f-testing-local-authentication
@@ -149,14 +180,9 @@ void install(jsi::Runtime &rt,
 
     OSStatus status = SecItemAdd((CFDictionaryRef)dict, NULL);
 
-    if (status == noErr) {
-      return res;
+    if (status != noErr) {
+      setSecurityError(rt, res, status);
     }
-
-    auto errorStr = jsi::String::createFromUtf8(
-        rt, "op-s2 could not set value, error code: " + std::to_string(status));
-
-    res.setProperty(rt, "error", errorStr);
 
     return res;
   });
@@ -184,7 +210,7 @@ void install(jsi::Runtime &rt,
       withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
     }
 
-    NSMutableDictionary *dict = newDefaultDictionary(key);
+    NSMutableDictionary *dict = get_base_entry_dict(key);
 
     [dict setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
     [dict setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
@@ -241,20 +267,11 @@ void install(jsi::Runtime &rt,
       return res;
     }
 
-    if (status == -25300) {
-      auto errorStr = jsi::String::createFromUtf8(rt, "NOT FOUND");
-      res.setProperty(rt, "error", errorStr);
-    } else {
-      auto errorStr = jsi::String::createFromUtf8(
-          rt, "UKNOWN ERROR: " + std::to_string(status));
-      res.setProperty(rt, "error", errorStr);
-    }
-
+    setSecurityError(rt, res, status);
     return res;
   });
 
   auto del = HOSTFN("delete", 1) {
-
     if (count < 1) {
       throw jsi::JSError(rt, "Params object is missing");
     }

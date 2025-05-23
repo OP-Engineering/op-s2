@@ -35,7 +35,7 @@ export function getSetTests() {
       });
 
       expect(value).to.be.undefined;
-      expect(error).to.equal('NOT FOUND');
+      expect(error).to.equal('[op-s2] Item not found');
     });
 
     it('Setting not a string gives error', () => {
@@ -74,7 +74,7 @@ export function getSetTests() {
       });
 
       expect(val2).to.be.undefined;
-      expect(error2).to.equal('NOT FOUND');
+      expect(error2).to.equal('[op-s2] Item not found');
     });
   });
 }
