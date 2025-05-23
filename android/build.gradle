@@ -129,8 +129,8 @@ dependencies {
   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
-  implementation("androidx.security:security-crypto:1.1.0-alpha06")
-  implementation("androidx.biometric:biometric:1.2.0-alpha05")
+  implementation("androidx.security:security-crypto:1.1.0-alpha07")
+  implementation("androidx.biometric:biometric:1.4.0-alpha04")
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
