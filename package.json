@@ -1,12 +1,17 @@
 {
   "name": "@op-engineering/op-s2",
-  "version": "0.1.11",
+  "version": "0.0.0",
   "description": "Modern secure storage for React Native",
-  "main": "lib/commonjs/index",
-  "module": "lib/module/index",
-  "types": "lib/typescript/src/index.d.ts",
-  "react-native": "src/index",
-  "source": "src/index",
+  "main": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.tsx",
+      "types": "./lib/typescript/src/index.d.ts",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "src",
     "lib",
@@ -50,19 +55,28 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "@react-native/eslint-config": "^0.72.2",
-    "@types/jest": "^28.1.2",
-    "@types/react": "~17.0.21",
-    "del-cli": "^5.0.0",
-    "eslint": "^8.4.1",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "jest": "^28.1.1",
-    "prettier": "^2.0.5",
-    "react": "18.2.0",
-    "react-native": "^0.74.1",
-    "react-native-builder-bob": "^0.23.2",
-    "typescript": "^5.0.2"
+    "@eslint/compat": "^1.2.7",
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.22.0",
+    "@evilmartians/lefthook": "^1.5.0",
+    "@react-native-community/cli": "15.0.0-alpha.2",
+    "@react-native/babel-preset": "0.79.2",
+    "@react-native/eslint-config": "^0.78.0",
+    "@release-it/conventional-changelog": "^9.0.2",
+    "@types/jest": "^29.5.5",
+    "@types/react": "^19.0.0",
+    "commitlint": "^19.6.1",
+    "del-cli": "^5.1.0",
+    "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.3",
+    "react": "19.0.0",
+    "react-native": "0.79.2",
+    "react-native-builder-bob": "^0.40.8",
+    "release-it": "^17.10.0",
+    "typescript": "^5.8.3"
   },
   "resolutions": {
     "@types/react": "17.0.21"
@@ -74,7 +88,7 @@
   "workspaces": [
     "example"
   ],
-  "packageManager": "yarn@4.1.1",
+  "packageManager": "yarn@3.6.1",
   "engines": {
     "node": ">= 18.0.0"
   },
@@ -121,8 +135,5 @@
         }
       ]
     ]
-  },
-  "dependencies": {
-    "pod-install": "^0.2.2"
   }
 }

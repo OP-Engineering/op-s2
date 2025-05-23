@@ -1,7 +1,6 @@
 require "json"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
-folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 
 Pod::Spec.new do |s|
   s.name         = "op-s2"
@@ -14,15 +13,9 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "12.0" }
   s.source       = { :git => "https://github.com/OP-Engineering/op-s2.git", :tag => "#{s.version}" }
 
-  s.pod_target_xcconfig = {
-    :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations"
-  }
-
   s.header_mappings_dir = "cpp"
   s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{c,h,hpp,cpp}"
-  
-  s.dependency "React"
-  s.dependency "React-Core"
-  s.dependency "React-callinvoker"
-  s.framework = "LocalAuthentication"   
+  s.framework = "LocalAuthentication"
+
+  install_modules_dependencies(s)
 end
