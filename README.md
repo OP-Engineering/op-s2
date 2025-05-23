@@ -80,18 +80,11 @@ The library already uses the [Secure Enclave](https://support.apple.com/en-gb/gu
 
 The official Android crypto implementation uses hardware-backed-up encryption when possible. However, it will depend on the vendor to use the hardware chips or not, there is not much that can be done about that.
 
-The library currently depends on the latest available versions:
-
-```
-androidx.security:security-crypto:1.1.0-alpha06
-androidx.biometric:biometric:1.2.0-alpha05
-```
-
-And will be continually updated to support fixes and updates.
+The library currently depends on the latest available versions and is periodically updated to support fixes and updates.
 
 ## TODO
 
-- [ ] Add `getAllKeys`, `getAllItems` and `deleteAllItems` methods (if possible)
+- [-] Add `getAllKeys`, `getAllItems` and `deleteAllItems` methods (Not possible on iOS)
 - [ ] Device testing list
 - [ ] Security audits
 
