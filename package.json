@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-s2",
-  "version": "0.1.11",
+  "version": "0.0.0",
   "description": "Modern secure storage for React Native",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
