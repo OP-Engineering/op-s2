@@ -82,17 +82,42 @@ export const get = proxy.get;
 export const set = proxy.set;
 export const del = proxy.del;
 
+type SharedOperationErrors =
+  | '[op-s2] User cancelled authentication'
+  | '[op-s2] Authentication failed'
+  | '[op-s2] User interaction not allowed'
+  | '[op-s2] Missing entitlement'
+  | `[op-s2] Security error code: ${string}. Look up code error at https://www.osstatus.com/`
+  | `op-s2 could not set value, error code: ${string}`;
+
+type SetErrors =
+  | 'Params object is missing'
+  | 'Params is not an object'
+  | 'Key property is missing'
+  | 'Value property is missing'
+  | 'Value property is not a string'
+  | '[op-s2] Could not set value, duplicate item'
+  | SharedOperationErrors;
+
+type GetErrors =
+  | 'Params object is missing'
+  | 'Params must be an object with key and value'
+  | 'key property is missing'
+  | '[op-s2] Item not found'
+  | 'Biometrics not available'
+  | SharedOperationErrors;
+
 interface OPS2 {
   set: (params: {
     key: string;
     value: string;
     withBiometrics?: boolean;
     accessibility?: ACCESSIBILITY;
-  }) => { error?: string };
+  }) => { error?: SetErrors };
   get: (params: {
     key: string;
     withBiometrics?: boolean;
     accessibility?: ACCESSIBILITY;
-  }) => { value: string | undefined; error?: string };
+  }) => { value: string | undefined; error?: GetErrors };
   del: (params: { key: string; withBiometrics?: boolean }) => void;
 }
