@@ -38,7 +38,7 @@ def reactNativeArchitectures() {
 android {
 
   namespace "com.op.s2"
-
+  ndkVersion getExtOrDefault("ndkVersion")
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
 
   buildFeatures {
