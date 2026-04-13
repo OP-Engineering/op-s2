@@ -6,23 +6,21 @@
 #import <jsi/jsi.h>
 
 @implementation OPS2
+@synthesize bridge = _bridge;
 RCT_EXPORT_MODULE()
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
-  RCTBridge *bridge = [RCTBridge currentBridge];
-  RCTCxxBridge *cxxBridge = (RCTCxxBridge *)bridge;
+  RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
   if (cxxBridge == nil) {
     return @false;
   }
 
-  using namespace facebook;
-
-  auto jsiRuntime = (jsi::Runtime *)cxxBridge.runtime;
+  auto jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
   if (jsiRuntime == nil) {
     return @false;
   }
   auto &runtime = *jsiRuntime;
-  auto callInvoker = bridge.jsCallInvoker;
+  auto callInvoker = _bridge.jsCallInvoker;
 
   ops2::install(runtime, callInvoker);
 
