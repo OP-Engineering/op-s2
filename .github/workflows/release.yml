@@ -17,7 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
       - name: enable corepack
         run: corepack enable
         shell: bash
@@ -38,7 +39,8 @@ jobs:
           TAG_NAME=${GITHUB_REF#refs/tags/}
           jq --arg version "$TAG_NAME" '.version = $version' package.json > tmp.$$.json && mv tmp.$$.json package.json
 
-      - run: npm publish
+      - name: Publish to npm (trusted publishing)
+        run: npm publish
 
       - name: Create Github Release
         uses: elgohr/Github-Release-Action@v5
