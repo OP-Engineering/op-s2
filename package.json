@@ -31,6 +31,9 @@
 		"!**/__mocks__",
 		"!**/.*"
 	],
+	"codegenConfig": {
+		"jsSrcsDir": "src"
+	},
 	"scripts": {
 		"example": "yarn workspace @op-engineering/op-s2-example",
 		"prepare": "bob build",

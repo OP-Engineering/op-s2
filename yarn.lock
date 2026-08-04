@@ -2939,7 +2939,7 @@ __metadata:
     "@babel/core": ^7.25.2
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@op-engineering/op-test": ^0.1.0
+    "@op-engineering/op-test": 0.2.7
     "@react-native-community/cli": 18.0.0
     "@react-native-community/cli-platform-android": 18.0.0
     "@react-native-community/cli-platform-ios": 18.0.0
@@ -2951,6 +2951,7 @@ __metadata:
     react-native: 0.79.2
     react-native-builder-bob: ^0.40.8
     react-native-monorepo-config: ^0.1.9
+    react-native-safe-area-context: ^5.8.1
   languageName: unknown
   linkType: soft
 
@@ -2986,13 +2987,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@op-engineering/op-test@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "@op-engineering/op-test@npm:0.1.0"
+"@op-engineering/op-test@npm:0.2.7":
+  version: 0.2.7
+  resolution: "@op-engineering/op-test@npm:0.2.7"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 9e40413eb5dcefa81393511d7a3a2cfe0bc1d4f2982625e47cb8a0ee5a6899a3afb50bd691c2fbf3b64c81a883d833597d86f4cd733d288c384c93636dfd271c
+  checksum: c8190dfcf2054fcc56b2e1bcb49eb221185ab9f64d0097486a20aedcb2d6504f97c55c96c821696fa85d1674cd513cc0b7e34196b849797b4145e6b5fcb09233
   languageName: node
   linkType: hard
 
@@ -11314,6 +11315,16 @@ __metadata:
     escape-string-regexp: ^5.0.0
     fast-glob: ^3.3.3
   checksum: 6356c362c517c49e17d54ee764c3566ba71491fa0d755618ecf2ca548348668e84fe448c24066645983acbc2bd4c0ed47594f9b3ec9dcc0558c0fd9594d2391e
+  languageName: node
+  linkType: hard
+
+"react-native-safe-area-context@npm:^5.8.1":
+  version: 5.8.1
+  resolution: "react-native-safe-area-context@npm:5.8.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: a2c459427a83251824db16a1d0948b48dc0fc0fc3522632405050f7b7c3b5a4c0573280a364910a79e64581a064953589342d5e8df863c5b9190aef76e587b65
   languageName: node
   linkType: hard
 
