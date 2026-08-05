@@ -1,9 +1,6 @@
 import { Text, StyleSheet } from 'react-native';
 import { useEffect, useState } from 'react';
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-} from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   displayResults,
   runTests,
