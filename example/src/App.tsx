@@ -1,5 +1,6 @@
-import { Text, StyleSheet, SafeAreaView } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { useEffect, useState } from 'react';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   displayResults,
   runTests,
@@ -17,9 +18,11 @@ export default function App() {
     run();
   }, []);
   return (
-    <SafeAreaView style={styles.container}>
-      {results ? displayResults(results) : <Text>Loading...</Text>}
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        {results ? displayResults(results) : <Text>Loading...</Text>}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
