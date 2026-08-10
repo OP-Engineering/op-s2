@@ -48,6 +48,7 @@ class CryptoManager(private val context: Context) {
     }
 
     fun delete(key: String, withBiometrics: Boolean = false) {
+        if (withBiometrics) migrateLegacyEntry(key)
         val (target, _) = target(withBiometrics)
         target.edit().remove(key).apply()
     }
@@ -119,11 +120,26 @@ class CryptoManager(private val context: Context) {
         if (rawLegacyPrefs.all.isEmpty()) return
 
         val legacyPrefs = openLegacyEncryptedPrefs(legacyFilename, requireUserAuthentication = false) ?: return
-        for (key in legacyPrefs.all.keys) {
-            val value = legacyPrefs.getString(key, null) ?: continue
-            writeEntry(newTarget, alias, key, value)
+        val allKeys = legacyPrefs.all.keys
+        val migratedKeys = mutableListOf<String>()
+        for (key in allKeys) {
+            try {
+                val value = legacyPrefs.getString(key, null) ?: continue
+                writeEntry(newTarget, alias, key, value)
+                migratedKeys.add(key)
+            } catch (e: Exception) {
+                // Leave this entry in the legacy store so migration can be retried on the
+                // next launch instead of failing CryptoManager construction for every key.
+                Log.w("OPS2", "Failed to migrate legacy entry '$key' from '$legacyFilename'", e)
+            }
         }
-        rawLegacyPrefs.edit().clear().apply()
+        if (migratedKeys.size == allKeys.size) {
+            rawLegacyPrefs.edit().clear().apply()
+        } else if (migratedKeys.isNotEmpty()) {
+            val editor = rawLegacyPrefs.edit()
+            migratedKeys.forEach { editor.remove(it) }
+            editor.apply()
+        }
     }
 
     private fun migrateLegacyEntry(key: String) {
@@ -140,6 +156,14 @@ class CryptoManager(private val context: Context) {
         rawLegacyPrefs.edit().remove(key).apply()
     }
 
+    // Deliberately no .setKeyAlias(...) here: op-s2 <= 1.1.0 never set one either, so both its
+    // "regular" and "biometric" MasterKey instances resolved to the same MasterKey.DEFAULT_MASTER_KEY_ALIAS.
+    // androidx's MasterKeys.getOrCreate() reuses an existing key by alias without checking that its
+    // requireUserAuthentication matches what's requested, so on real devices both legacy files were
+    // actually encrypted under one shared, non-authenticated key regardless of the flag passed here.
+    // Giving these two calls distinct aliases would make this resolve to a key that never existed on
+    // upgrading devices, silently breaking decryption of real legacy data (caught below and treated as
+    // "nothing to migrate"). Keep this alias-less so it keeps resolving to the key that already exists.
     private fun openLegacyEncryptedPrefs(filename: String, requireUserAuthentication: Boolean): SharedPreferences? {
         return try {
             val legacyMasterKey = MasterKey.Builder(context)
