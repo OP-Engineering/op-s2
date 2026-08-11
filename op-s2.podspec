@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "12.0" }
+  s.platforms    = { :ios => "15.1" }
   s.source       = { :git => "https://github.com/OP-Engineering/op-s2.git", :tag => "#{s.version}" }
 
   s.header_mappings_dir = "cpp"
