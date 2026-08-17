@@ -4,7 +4,7 @@ declare global {
   var __OPS2Proxy: OPS2 | undefined;
 }
 
-if (global.__OPS2Proxy == null) {
+if (globalThis.__OPS2Proxy == null) {
   const OPS2 = NativeModules.OPS2;
 
   if (OPS2 == null) {
@@ -26,14 +26,14 @@ if (global.__OPS2Proxy == null) {
   }
 
   // Check again if the constructor now exists. If not, throw an error.
-  if (global.__OPS2Proxy == null) {
+  if (globalThis.__OPS2Proxy == null) {
     throw new Error(
       'Failed to install op-s2, the native initializer function does not exist. Are you trying to use OPS2 from different JS Runtimes?'
     );
   }
 }
 
-const proxy = global.__OPS2Proxy;
+const proxy = globalThis.__OPS2Proxy;
 
 export enum ACCESSIBILITY {
   /**

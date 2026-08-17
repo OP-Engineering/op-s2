@@ -80,3 +80,8 @@ lib/
 # React Native Codegen
 ios/generated
 android/generated
+
+# SwiftPM (regenerated on every manifest evaluation)
+.build/
+.swiftpm/
+Package.resolved
