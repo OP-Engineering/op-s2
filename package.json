@@ -20,6 +20,8 @@
 		"ios",
 		"cpp",
 		"*.podspec",
+		"Package.swift",
+		"op-s2-spm-prefix.h",
 		"!ios/build",
 		"!android/build",
 		"!android/gradle",
@@ -71,7 +73,7 @@
 	"devDependencies": {
 		"@evilmartians/lefthook": "^1.5.0",
 		"@react-native-community/cli": "20.1.0",
-		"@react-native/babel-preset": "0.86.2",
+		"@react-native/babel-preset": "0.87.0",
 		"@release-it/conventional-changelog": "^9.0.2",
 		"@types/jest": "^29.5.5",
 		"@types/react": "^19.2.0",
@@ -81,7 +83,7 @@
 		"oxfmt": "^0.62.0",
 		"oxlint": "^1.77.0",
 		"react": "19.2.3",
-		"react-native": "0.86.2",
+		"react-native": "0.87.0",
 		"react-native-builder-bob": "^0.43.0",
 		"release-it": "^17.10.0",
 		"typescript": "^5.8.3"
