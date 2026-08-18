@@ -25,7 +25,6 @@ class CryptoManager(private val context: Context) {
 
     init {
         getOrCreateKey(MASTER_KEY_ALIAS, requireUserAuthentication = false)
-        getOrCreateKey(BIOMETRIC_KEY_ALIAS, requireUserAuthentication = true)
 
         // The non-biometric legacy store needs no authentication to read, so it's
         // migrated eagerly here. The biometric one is migrated lazily, entry by
@@ -57,6 +56,9 @@ class CryptoManager(private val context: Context) {
         if (withBiometrics) biometricPrefs to BIOMETRIC_KEY_ALIAS else prefs to MASTER_KEY_ALIAS
 
     private fun writeEntry(target: SharedPreferences, alias: String, key: String, value: String) {
+        // Lazily create the biometric key (not on the init block) to avoid erroring
+        // when no biometric authentication is set
+        getOrCreateKey(alias, requireUserAuthentication = alias == BIOMETRIC_KEY_ALIAS)
         val secretKey = keyStore.getKey(alias, null) as SecretKey
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, secretKey)
