@@ -7,12 +7,15 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -25,3 +28,95 @@ jobs:
 
       - name: Typecheck files
         run: yarn typecheck
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Cache SwiftPM artifacts
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-artifacts-
+
+      - name: Set up SwiftPM
+        run: |
+          cd example/ios
+          # download-spm-artifacts.js resolves Hermes via the `hermes-compiler`
+          # npm package's `latest-v1` dist-tag by default — a rolling tag
+          # decoupled from the exact `hermes-compiler` version react-native
+          # itself depends on (used to bytecode-compile the JS bundle). When
+          # they drift, the app crashes at launch with a Hermes bytecode
+          # version mismatch ("Wrong bytecode version. Expected X but got Y").
+          # Pin HERMES_VERSION to the installed react-native's own resolved
+          # hermes-compiler version so both always match.
+          export HERMES_VERSION=$(node -p "require('../node_modules/react-native/package.json').dependencies['hermes-compiler']")
+          echo "Pinning HERMES_VERSION=${HERMES_VERSION}"
+          npx react-native spm update --yes
+
+      - name: Give execute permissions to script
+        run: chmod +x ./scripts/test-ios.sh
+
+      - name: run tests
+        run: ./scripts/test-ios.sh
+
+      - name: Upload iOS diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-sim-log
+          path: example/ios-sim-log.txt
+          if-no-files-found: ignore
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Install JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Give execute permissions to script
+        run: chmod +x ./scripts/test-android.sh
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            ./scripts/test-android.sh
+
+      - name: Upload Android diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-logcat
+          path: example/android-logcat.txt
+          if-no-files-found: ignore

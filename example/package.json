@@ -5,6 +5,9 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios --simulator='iPhone 15 Pro'",
+    "run:ios:release": "react-native run-ios --mode Release --no-packager",
+    "run:android:release": "cd android && ./gradlew assembleRelease && adb install -r app/build/outputs/apk/release/app-release.apk && adb shell am start -n com.opsecurestorageexample/.MainActivity",
+    "postinstall": "patch-package",
     "start": "react-native start",
     "pods": "cd ios && RCT_NEW_ARCH_ENABLED=1 pod install",
     "build:android": "cd android && ./gradlew assembleDebug --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a",
@@ -27,6 +30,7 @@
     "@react-native/metro-config": "0.87.0",
     "@react-native/typescript-config": "0.87.0",
     "@types/react": "^19.2.0",
+    "patch-package": "^8.0.1",
     "react-native-builder-bob": "^0.43.0",
     "react-native-monorepo-config": "^0.1.9"
   },
