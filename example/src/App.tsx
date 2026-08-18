@@ -2,6 +2,7 @@ import { Text, StyleSheet } from 'react-native';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
+  allTestsPassed,
   displayResults,
   runTests,
   type DescribeBlock,
@@ -12,8 +13,18 @@ export default function App() {
   let [results, setResults] = useState<DescribeBlock | null>(null);
   useEffect(() => {
     let run = async () => {
-      let results2 = await runTests();
-      setResults(results2);
+      console.log('App has started 🟢');
+      try {
+        console.log('TESTS STARTED 🟠');
+        let results2 = await runTests();
+        let passed = allTestsPassed(results2);
+        console.log('TESTS FINISHED 🟢');
+        console.log(`OPS2_TEST_RESULT:${passed ? 'PASS' : 'FAIL'}`);
+        setResults(results2);
+      } catch (e) {
+        console.log(`TEST FAILED 🟥 ${e}`);
+        console.log('OPS2_TEST_RESULT:FAIL');
+      }
     };
     run();
   }, []);
