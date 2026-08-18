@@ -38,16 +38,18 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Cache Pods
+      - name: Cache SwiftPM artifacts
         uses: actions/cache@v5
         with:
-          path: example/ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('example/ios/Podfile.lock') }}
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-pods-
+            ${{ runner.os }}-spm-artifacts-
 
-      - name: Install Pods
-        run: yarn --cwd example pods
+      - name: Set up SwiftPM
+        run: |
+          cd example/ios
+          npx react-native spm update --yes
 
       - name: Give execute permissions to script
         run: chmod +x ./scripts/test-ios.sh
