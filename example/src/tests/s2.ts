@@ -1,5 +1,10 @@
 import { del, get, set, ACCESSIBILITY } from '@op-engineering/op-s2';
 import { describe, expect, it } from '@op-engineering/op-test';
+import { Platform } from 'react-native';
+
+// PRODUCT_BUNDLE_IDENTIFIER of the example app, which op-s2 uses as the
+// default keychain service on iOS.
+const EXAMPLE_BUNDLE_ID = 'com.op.s2';
 
 // Toggle to `true` when running on a simulator/emulator (where biometrics are
 // not enrolled and the prompt short-circuits with "Biometrics not available").
@@ -187,6 +192,147 @@ describe('accessibility option (iOS)', () => {
     del({ key });
   });
 });
+
+if (Platform.OS === 'ios') {
+  describe('service / accessGroup options (iOS)', () => {
+    it('set/get with a custom service', () => {
+      const key = 'key_service';
+
+      const { error: setError } = set({
+        key,
+        value: 'myServiceValue',
+        service: 'svcA',
+      });
+      expect(setError).toBe(undefined);
+
+      const { value, error } = get({ key, service: 'svcA' });
+      expect(error).toBe(undefined);
+      expect(value).toEqual('myServiceValue');
+
+      del({ key, service: 'svcA' });
+    });
+
+    it('items in different services do not collide', () => {
+      const key = 'key_service_isolation';
+
+      set({ key, value: 'valueA', service: 'svcA' });
+      set({ key, value: 'valueB', service: 'svcB' });
+
+      expect(get({ key, service: 'svcA' }).value).toEqual('valueA');
+      expect(get({ key, service: 'svcB' }).value).toEqual('valueB');
+
+      const { value, error } = get({ key });
+      expect(value).toBe(undefined);
+      expect(error).toEqual('[op-s2] Item not found');
+
+      del({ key, service: 'svcA' });
+      expect(get({ key, service: 'svcA' }).error).toEqual(
+        '[op-s2] Item not found'
+      );
+      expect(get({ key, service: 'svcB' }).value).toEqual('valueB');
+
+      del({ key, service: 'svcB' });
+    });
+
+    it('defaults the service to the bundle identifier', () => {
+      const key = 'key_service_default';
+
+      set({ key, value: 'myDefaultValue' });
+
+      const { value, error } = get({ key, service: EXAMPLE_BUNDLE_ID });
+      expect(error).toBe(undefined);
+      expect(value).toEqual('myDefaultValue');
+
+      del({ key, service: EXAMPLE_BUNDLE_ID });
+      expect(get({ key }).error).toEqual('[op-s2] Item not found');
+    });
+
+    it('treats empty service and accessGroup as unset', () => {
+      const key = 'key_service_empty';
+
+      const { error: setError } = set({
+        key,
+        value: 'myEmptyScopeValue',
+        service: '',
+        accessGroup: '',
+      });
+      expect(setError).toBe(undefined);
+
+      const { value, error } = get({ key });
+      expect(error).toBe(undefined);
+      expect(value).toEqual('myEmptyScopeValue');
+
+      del({ key, service: '', accessGroup: '' });
+      expect(get({ key }).error).toEqual('[op-s2] Item not found');
+    });
+
+    it('fails with an access group the app is not entitled to', () => {
+      const key = 'key_access_group_unentitled';
+
+      const { error } = set({
+        key,
+        value: 'myValue',
+        accessGroup: 'group.op.s2.not-entitled',
+      });
+      expect(error).toEqual('[op-s2] Missing entitlement');
+
+      // Clean up in case the write unexpectedly succeeded on this setup.
+      del({ key, accessGroup: 'group.op.s2.not-entitled' });
+    });
+
+    it('rejects a non-string service or accessGroup', () => {
+      const key = 'key_service_invalid';
+
+      const { error: serviceError } = set({
+        key,
+        value: 'myValue',
+        // @ts-ignore
+        service: 123,
+      });
+      expect(serviceError).toEqual('service property is not a string');
+
+      const { error: groupError } = set({
+        key,
+        value: 'myValue',
+        // @ts-ignore
+        accessGroup: 123,
+      });
+      expect(groupError).toEqual('accessGroup property is not a string');
+
+      let getError: unknown;
+      try {
+        // @ts-ignore
+        get({ key, service: 123 });
+      } catch (e) {
+        getError = e;
+      }
+      expect(String(getError)).toContain('service property is not a string');
+
+      expect(get({ key }).error).toEqual('[op-s2] Item not found');
+    });
+  });
+} else {
+  describe('service / accessGroup options (Android)', () => {
+    it('ignores service and accessGroup', () => {
+      const key = 'key_service_android';
+
+      const { error: setError } = set({
+        key,
+        value: 'myAndroidValue',
+        service: 'svcA',
+        accessGroup: 'group.op.s2.not-entitled',
+      });
+      expect(setError).toBe(undefined);
+
+      const { value, error } = get({ key });
+      expect(error).toBe(undefined);
+      expect(value).toEqual('myAndroidValue');
+
+      del({ key, service: 'svcB' });
+      expect(get({ key }).error).toEqual('[op-s2] Item not found');
+    });
+  });
+}
 
 if (RUN_BIOMETRIC_TESTS) {
   describe('biometricPrompt options', () => {

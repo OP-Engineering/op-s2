@@ -15,6 +15,15 @@ struct BiometricPromptArgs {
   bool allowBiometricWeak;
 };
 
+// Identifies which keychain item an operation targets beyond its key.
+// Empty strings mean "unset": the service falls back to the bundle identifier
+// and no access group is set, which matches the behavior before these options
+// existed.
+struct ItemScope {
+  std::string service;
+  std::string accessGroup;
+};
+
 typedef enum {
   kBiometricsStateAvailable,
   kBiometricsStateNotAvailable,
@@ -28,8 +37,22 @@ static void zeroizeString(std::string &str) {
   }
 }
 
+// Uses the byte length rather than the C string, so an embedded NUL does not
+// truncate the value. Returns nil only for invalid UTF-8.
 static NSString *stringToNSString(const std::string &str) {
-  return [NSString stringWithUTF8String:str.c_str()];
+  return [[NSString alloc] initWithBytes:str.data() length:str.size() encoding:NSUTF8StringEncoding];
+}
+
+// Reads an optional string property. Returns false when the property is
+// present but neither a string nor null/undefined; `out` is left untouched
+// unless a string is found.
+static bool readOptionalString(jsi::Runtime &rt, const jsi::Object &obj, const char *name, std::string &out) {
+  if (!obj.hasProperty(rt, name)) return true;
+  jsi::Value v = obj.getProperty(rt, name);
+  if (v.isNull() || v.isUndefined()) return true;
+  if (!v.isString()) return false;
+  out = v.asString(rt).utf8(rt);
+  return true;
 }
 
 static BiometricPromptArgs extractBiometricPromptArgs(jsi::Runtime &rt, const jsi::Object &params) {
@@ -50,10 +73,8 @@ static BiometricPromptArgs extractBiometricPromptArgs(jsi::Runtime &rt, const js
       // empty string the same as a missing property so we always fall back
       // to a safe default.
       auto getString = [&](const char *name, const std::string &fallback, bool allowEmpty = true) -> std::string {
-        if (!prompt.hasProperty(rt, name)) return fallback;
-        jsi::Value v = prompt.getProperty(rt, name);
-        if (!v.isString()) return fallback;
-        std::string s = v.asString(rt).utf8(rt);
+        std::string s = fallback;
+        if (!readOptionalString(rt, prompt, name, s)) return fallback;
         if (!allowEmpty && s.empty()) return fallback;
         return s;
       };
@@ -74,6 +95,19 @@ static BiometricPromptArgs extractBiometricPromptArgs(jsi::Runtime &rt, const js
   }
 
   return args;
+}
+
+// Reads `service` and `accessGroup` into `scope`. Returns an error message
+// when either is present with a non-string value, so a typo can't silently
+// fall back to the default scope; returns an empty string otherwise.
+static std::string extractItemScope(jsi::Runtime &rt, const jsi::Object &params, ItemScope &scope) {
+  if (!readOptionalString(rt, params, "service", scope.service)) {
+    return "service property is not a string";
+  }
+  if (!readOptionalString(rt, params, "accessGroup", scope.accessGroup)) {
+    return "accessGroup property is not a string";
+  }
+  return "";
 }
 
 // MARK: - LAContext Factory
@@ -146,14 +180,29 @@ SecAccessControlRef createBioSecAccessControl(bool allowDeviceCredential, bool a
       nil);
 }
 
-NSMutableDictionary *get_base_entry_dict(std::string key) {
+NSMutableDictionary *get_base_entry_dict(const std::string &key, const ItemScope &scope) {
   NSMutableDictionary *queryDictionary = [[NSMutableDictionary alloc] init];
   [queryDictionary setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
 
   NSData *encodedIdentifier = [NSData dataWithBytes:key.data() length:key.length()];
   [queryDictionary setObject:encodedIdentifier forKey:(__bridge id)kSecAttrGeneric];
   [queryDictionary setObject:encodedIdentifier forKey:(__bridge id)kSecAttrAccount];
-  [queryDictionary setObject:[[NSBundle mainBundle] bundleIdentifier] forKey:(__bridge id)kSecAttrService];
+
+  // The bundle identifier can be nil in some test hosts; leave the service
+  // unset then rather than crash on a nil dictionary value.
+  NSString *service = scope.service.empty()
+      ? [[NSBundle mainBundle] bundleIdentifier]
+      : stringToNSString(scope.service);
+  if (service != nil) {
+    [queryDictionary setObject:service forKey:(__bridge id)kSecAttrService];
+  }
+
+  // Without an access group, queries (including the delete in `set`) match
+  // every access group the app belongs to, as with the Keychain API itself.
+  NSString *accessGroup = scope.accessGroup.empty() ? nil : stringToNSString(scope.accessGroup);
+  if (accessGroup != nil) {
+    [queryDictionary setObject:accessGroup forKey:(__bridge id)kSecAttrAccessGroup];
+  }
 
   return queryDictionary;
 }
@@ -176,8 +225,8 @@ CFStringRef getAccessibilityValue(int accessibility) {
 // authentication UI — otherwise deleting an entry that was previously stored
 // with biometric protection would pop the Face ID / passcode prompt even
 // though the caller explicitly opted out of biometrics.
-void _delete(std::string &key, bool withBiometrics) {
-  NSMutableDictionary *dict = get_base_entry_dict(key);
+void _delete(const std::string &key, const ItemScope &scope, bool withBiometrics) {
+  NSMutableDictionary *dict = get_base_entry_dict(key, scope);
   [dict setObject:(__bridge id)kSecAttrSynchronizableAny forKey:(__bridge id)kSecAttrSynchronizable];
   if (!withBiometrics) {
     [dict setObject:(__bridge id)kSecUseAuthenticationUIFail forKey:(__bridge id)kSecUseAuthenticationUI];
@@ -250,6 +299,13 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     }
 
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
+    ItemScope scope;
+    std::string scopeError = extractItemScope(rt, params, scope);
+    if (!scopeError.empty()) {
+      res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
+      return res;
+    }
+
     std::string val = params.getProperty(rt, "value").asString(rt).utf8(rt);
 
     CFStringRef accessibility = kSecAttrAccessibleAfterFirstUnlock;
@@ -274,9 +330,9 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     }
 
     // Delete prior entries (both local and synced) to prevent errSecDuplicateItem
-    _delete(key, withBiometrics);
+    _delete(key, scope, withBiometrics);
 
-    NSMutableDictionary *dict = get_base_entry_dict(key);
+    NSMutableDictionary *dict = get_base_entry_dict(key, scope);
 
     if (withBiometrics) {
       SecAccessControlRef accessControl = createBioSecAccessControl(promptArgs.allowDeviceCredential, promptArgs.allowBiometricWeak);
@@ -327,8 +383,13 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     }
 
     BiometricPromptArgs promptArgs = extractBiometricPromptArgs(rt, params);
+    ItemScope scope;
+    std::string scopeError = extractItemScope(rt, params, scope);
+    if (!scopeError.empty()) {
+      throw jsi::JSError(rt, scopeError);
+    }
 
-    NSMutableDictionary *dict = get_base_entry_dict(key);
+    NSMutableDictionary *dict = get_base_entry_dict(key, scope);
 
     [dict setObject:(__bridge id)kSecMatchLimitOne forKey:(__bridge id)kSecMatchLimit];
     [dict setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
@@ -395,7 +456,12 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
       withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
     }
     
-    _delete(key, withBiometrics);
+    ItemScope scope;
+    std::string scopeError = extractItemScope(rt, params, scope);
+    if (!scopeError.empty()) {
+      throw jsi::JSError(rt, scopeError);
+    }
+    _delete(key, scope, withBiometrics);
     return {};
   });
 
