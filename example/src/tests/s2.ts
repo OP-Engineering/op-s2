@@ -193,6 +193,58 @@ describe('accessibility option (iOS)', () => {
   });
 });
 
+describe('service / accessGroup validation', () => {
+  it('rejects a non-string service or accessGroup', () => {
+    const key = 'key_service_invalid';
+
+    const { error: serviceError } = set({
+      key,
+      value: 'myValue',
+      // @ts-ignore
+      service: 123,
+    });
+    expect(serviceError).toEqual('service property is not a string');
+
+    const { error: groupError } = set({
+      key,
+      value: 'myValue',
+      // @ts-ignore
+      accessGroup: 123,
+    });
+    expect(groupError).toEqual('accessGroup property is not a string');
+
+    // Like a missing key, an invalid param makes get/del throw.
+    let getError: unknown;
+    try {
+      // @ts-ignore
+      get({ key, service: 123 });
+    } catch (e) {
+      getError = e;
+    }
+    expect(String(getError)).toContain('service property is not a string');
+
+    let delError: unknown;
+    try {
+      // @ts-ignore
+      del({ key, accessGroup: 123 });
+    } catch (e) {
+      delError = e;
+    }
+    expect(String(delError)).toContain('accessGroup property is not a string');
+
+    expect(get({ key }).error).toEqual('[op-s2] Item not found');
+  });
+
+  it('returns an object without error from a valid del', () => {
+    const key = 'key_del_result';
+
+    set({ key, value: 'myValue' });
+    const { error } = del({ key });
+    expect(error).toBe(undefined);
+    expect(get({ key }).error).toEqual('[op-s2] Item not found');
+  });
+});
+
 if (Platform.OS === 'ios') {
   describe('service / accessGroup options (iOS)', () => {
     it('set/get with a custom service', () => {
@@ -278,37 +330,6 @@ if (Platform.OS === 'ios') {
 
       // Clean up in case the write unexpectedly succeeded on this setup.
       del({ key, accessGroup: 'group.op.s2.not-entitled' });
-    });
-
-    it('rejects a non-string service or accessGroup', () => {
-      const key = 'key_service_invalid';
-
-      const { error: serviceError } = set({
-        key,
-        value: 'myValue',
-        // @ts-ignore
-        service: 123,
-      });
-      expect(serviceError).toEqual('service property is not a string');
-
-      const { error: groupError } = set({
-        key,
-        value: 'myValue',
-        // @ts-ignore
-        accessGroup: 123,
-      });
-      expect(groupError).toEqual('accessGroup property is not a string');
-
-      let getError: unknown;
-      try {
-        // @ts-ignore
-        get({ key, service: 123 });
-      } catch (e) {
-        getError = e;
-      }
-      expect(String(getError)).toContain('service property is not a string');
-
-      expect(get({ key }).error).toEqual('[op-s2] Item not found');
     });
   });
 } else {

@@ -117,6 +117,12 @@ type SharedOperationErrors =
   | `[op-s2] Security error code: ${string}. Look up code error at https://www.osstatus.com/`
   | `op-s2 could not set value, error code: ${string}`;
 
+type ScopeErrors =
+  | 'service is not valid UTF-8'
+  | 'accessGroup is not valid UTF-8'
+  | '[op-s2] Could not determine the default service, pass service explicitly'
+  | `[op-s2] Could not determine the default access group. ${string}`;
+
 type SetErrors =
   | 'Params object is missing'
   | 'Params is not an object'
@@ -126,6 +132,7 @@ type SetErrors =
   | 'service property is not a string'
   | 'accessGroup property is not a string'
   | '[op-s2] Could not set value, duplicate item'
+  | ScopeErrors
   | SharedOperationErrors;
 
 type GetErrors =
@@ -134,7 +141,10 @@ type GetErrors =
   | 'key property is missing'
   | '[op-s2] Item not found'
   | 'Biometrics not available'
+  | ScopeErrors
   | SharedOperationErrors;
+
+type DelErrors = ScopeErrors;
 
 interface ItemScope {
   /**
@@ -191,7 +201,7 @@ interface OPS2 {
       withBiometrics?: boolean;
       biometricPrompt?: BiometricPromptOptions;
     }
-  ) => void;
+  ) => { error?: DelErrors };
 }
 
 // Map the string-based ACCESSIBILITY enum to the integer codes the iOS

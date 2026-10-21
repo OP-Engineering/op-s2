@@ -52,6 +52,16 @@ static BiometricPromptOptions extractBiometricPromptOptions(jsi::Runtime &rt, co
   return options;
 }
 
+static const char *validateItemScope(jsi::Runtime &rt, const jsi::Object &params) {
+  auto isInvalid = [&](const char *name) {
+    jsi::Value v = params.getProperty(rt, name);
+    return !v.isNull() && !v.isUndefined() && !v.isString();
+  };
+  if (isInvalid("service")) return "service property is not a string";
+  if (isInvalid("accessGroup")) return "accessGroup property is not a string";
+  return nullptr;
+}
+
 void install(
     jsi::Runtime &rt,
     std::function<void(const char *, const char *, bool, BiometricPromptOptions)> setFn,
@@ -89,6 +99,11 @@ void install(
 
     if (!params.getProperty(rt, "value").isString()) {
       res.setProperty(rt, "error", "Value property is not a string");
+      return res;
+    }
+
+    if (const char *scopeError = validateItemScope(rt, params)) {
+      res.setProperty(rt, "error", scopeError);
       return res;
     }
 
@@ -140,6 +155,10 @@ void install(
 
     BiometricPromptOptions promptOptions = extractBiometricPromptOptions(rt, params);
 
+    if (const char *scopeError = validateItemScope(rt, params)) {
+      throw jsi::JSError(rt, scopeError);
+    }
+
     auto res = jsi::Object(rt);
 
     try {
@@ -185,9 +204,13 @@ void install(
 
     BiometricPromptOptions promptOptions = extractBiometricPromptOptions(rt, params);
 
+    if (const char *scopeError = validateItemScope(rt, params)) {
+      throw jsi::JSError(rt, scopeError);
+    }
+
     _del(key.c_str(), withBiometrics, promptOptions);
 
-    return {};
+    return jsi::Object(rt);
   });
 
   jsi::Object module = jsi::Object(rt);

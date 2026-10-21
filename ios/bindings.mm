@@ -521,11 +521,13 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     if (!scopeError.empty()) {
       throw jsi::JSError(rt, scopeError);
     }
+
+    auto res = jsi::Object(rt);
     scopeError = _delete(key, scope, withBiometrics);
     if (!scopeError.empty()) {
-      throw jsi::JSError(rt, scopeError);
+      res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
     }
-    return {};
+    return res;
   });
 
   jsi::Object module = jsi::Object(rt);
