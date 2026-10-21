@@ -149,9 +149,9 @@ interface ItemScope {
    * group in its `keychain-access-groups` or app group entitlement, otherwise
    * the operation fails with `[op-s2] Missing entitlement`.
    *
-   * When omitted, `set` writes to the app's default access group, but `get`,
-   * `del` and the replace step of `set` match the key in every access group
-   * the app belongs to.
+   * When omitted, every operation uses the app's default access group (the
+   * first group in its access group list), so it never touches a copy of the
+   * item shared through another group.
    */
   accessGroup?: string;
 }

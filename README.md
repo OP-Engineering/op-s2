@@ -132,7 +132,8 @@ del({ key: 'token', ...scope });
 
 - Empty strings are treated as unset.
 - Use the same `service` and `accessGroup` for every operation on an item. An item written without them is not found by a `get` with a different `service`.
-- Omitting `accessGroup` follows the Keychain API: `set` writes to the app's default access group, but `get`, `del` and the replace step of `set` match the key in **every** access group the app belongs to. So a `set` or `del` without `accessGroup` also removes a copy shared through another group, and a `get` without it returns whichever copy it finds first. Pass `accessGroup` whenever an item may exist in more than one group.
+- Omitting `accessGroup` means the app's default access group (the first group in its access group list) for `set`, `get` and `del` alike. Unlike a raw Keychain query without an access group, it never reads, replaces or deletes a copy of the item stored in another group.
+- If the default `service` or access group can't be determined (e.g. a nil bundle identifier, or a Keychain error before the first unlock), the operation fails rather than falling back to an unscoped query: `set` and `get` return an `error`, and `del` throws.
 - A non-string `service` or `accessGroup` is an error rather than silently using the default scope.
 - Both options are ignored on Android, where items are always private to the app.
 

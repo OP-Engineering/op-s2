@@ -3,6 +3,7 @@
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <Security/Security.h>
 #import <dispatch/dispatch.h>
+#include <mutex>
 
 namespace ops2 {
 namespace jsi = facebook::jsi;
@@ -180,29 +181,77 @@ SecAccessControlRef createBioSecAccessControl(bool allowDeviceCredential, bool a
       nil);
 }
 
-NSMutableDictionary *get_base_entry_dict(const std::string &key, const ItemScope &scope) {
+std::string getSecurityErrorMessage(OSStatus status);
+
+static OSStatus getDefaultAccessGroup(NSString **out) {
+  static std::mutex mutex;
+  static NSString *cached = nil;
+  std::lock_guard<std::mutex> lock(mutex);
+  if (cached != nil) {
+    *out = cached;
+    return noErr;
+  }
+
+  NSDictionary *probe = @{
+    (__bridge id)kSecClass: (__bridge id)kSecClassGenericPassword,
+    (__bridge id)kSecAttrService: @"op-s2.default-access-group-probe",
+    (__bridge id)kSecAttrAccount: @"probe",
+  };
+  // The probe's own queries can match every group: its service is private
+  // to op-s2. Clear a probe left behind by an interrupted earlier run.
+  SecItemDelete((__bridge CFDictionaryRef)probe);
+
+  NSMutableDictionary *add = [probe mutableCopy];
+  [add setObject:(__bridge id)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly forKey:(__bridge id)kSecAttrAccessible];
+  [add setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnAttributes];
+  CFTypeRef result = NULL;
+  OSStatus status = SecItemAdd((__bridge CFDictionaryRef)add, &result);
+  if (status != noErr) return status;
+
+  NSDictionary *attributes = (__bridge_transfer NSDictionary *)result;
+  SecItemDelete((__bridge CFDictionaryRef)probe);
+
+  NSString *group = [attributes objectForKey:(__bridge id)kSecAttrAccessGroup];
+  if (group == nil) return errSecItemNotFound;
+  cached = group;
+  *out = cached;
+  return noErr;
+}
+
+NSMutableDictionary *get_base_entry_dict(const std::string &key, const ItemScope &scope, std::string &error) {
+  NSString *service = scope.service.empty()
+      ? [[NSBundle mainBundle] bundleIdentifier]
+      : stringToNSString(scope.service);
+  if (service == nil) {
+    error = scope.service.empty()
+        ? "[op-s2] Could not determine the default service, pass service explicitly"
+        : "service is not valid UTF-8";
+    return nil;
+  }
+
+  NSString *accessGroup = nil;
+  if (scope.accessGroup.empty()) {
+    OSStatus status = getDefaultAccessGroup(&accessGroup);
+    if (status != noErr) {
+      error = "[op-s2] Could not determine the default access group. " + getSecurityErrorMessage(status);
+      return nil;
+    }
+  } else {
+    accessGroup = stringToNSString(scope.accessGroup);
+    if (accessGroup == nil) {
+      error = "accessGroup is not valid UTF-8";
+      return nil;
+    }
+  }
+
   NSMutableDictionary *queryDictionary = [[NSMutableDictionary alloc] init];
   [queryDictionary setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
 
   NSData *encodedIdentifier = [NSData dataWithBytes:key.data() length:key.length()];
   [queryDictionary setObject:encodedIdentifier forKey:(__bridge id)kSecAttrGeneric];
   [queryDictionary setObject:encodedIdentifier forKey:(__bridge id)kSecAttrAccount];
-
-  // The bundle identifier can be nil in some test hosts; leave the service
-  // unset then rather than crash on a nil dictionary value.
-  NSString *service = scope.service.empty()
-      ? [[NSBundle mainBundle] bundleIdentifier]
-      : stringToNSString(scope.service);
-  if (service != nil) {
-    [queryDictionary setObject:service forKey:(__bridge id)kSecAttrService];
-  }
-
-  // Without an access group, queries (including the delete in `set`) match
-  // every access group the app belongs to, as with the Keychain API itself.
-  NSString *accessGroup = scope.accessGroup.empty() ? nil : stringToNSString(scope.accessGroup);
-  if (accessGroup != nil) {
-    [queryDictionary setObject:accessGroup forKey:(__bridge id)kSecAttrAccessGroup];
-  }
+  [queryDictionary setObject:service forKey:(__bridge id)kSecAttrService];
+  [queryDictionary setObject:accessGroup forKey:(__bridge id)kSecAttrAccessGroup];
 
   return queryDictionary;
 }
@@ -225,13 +274,17 @@ CFStringRef getAccessibilityValue(int accessibility) {
 // authentication UI — otherwise deleting an entry that was previously stored
 // with biometric protection would pop the Face ID / passcode prompt even
 // though the caller explicitly opted out of biometrics.
-void _delete(const std::string &key, const ItemScope &scope, bool withBiometrics) {
-  NSMutableDictionary *dict = get_base_entry_dict(key, scope);
+// Returns an error message when the scope can't be resolved.
+std::string _delete(const std::string &key, const ItemScope &scope, bool withBiometrics) {
+  std::string error;
+  NSMutableDictionary *dict = get_base_entry_dict(key, scope, error);
+  if (dict == nil) return error;
   [dict setObject:(__bridge id)kSecAttrSynchronizableAny forKey:(__bridge id)kSecAttrSynchronizable];
   if (!withBiometrics) {
     [dict setObject:(__bridge id)kSecUseAuthenticationUIFail forKey:(__bridge id)kSecUseAuthenticationUI];
   }
   SecItemDelete((__bridge CFDictionaryRef)dict);
+  return "";
 }
 
 // Thread-safe dispatch for Keychain APIs that present authentication UI
@@ -330,9 +383,12 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     }
 
     // Delete prior entries (both local and synced) to prevent errSecDuplicateItem
-    _delete(key, scope, withBiometrics);
-
-    NSMutableDictionary *dict = get_base_entry_dict(key, scope);
+    scopeError = _delete(key, scope, withBiometrics);
+    NSMutableDictionary *dict = scopeError.empty() ? get_base_entry_dict(key, scope, scopeError) : nil;
+    if (dict == nil) {
+      res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
+      return res;
+    }
 
     if (withBiometrics) {
       SecAccessControlRef accessControl = createBioSecAccessControl(promptArgs.allowDeviceCredential, promptArgs.allowBiometricWeak);
@@ -389,12 +445,16 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
       throw jsi::JSError(rt, scopeError);
     }
 
-    NSMutableDictionary *dict = get_base_entry_dict(key, scope);
+    auto res = jsi::Object(rt);
+
+    NSMutableDictionary *dict = get_base_entry_dict(key, scope, scopeError);
+    if (dict == nil) {
+      res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
+      return res;
+    }
 
     [dict setObject:(__bridge id)kSecMatchLimitOne forKey:(__bridge id)kSecMatchLimit];
     [dict setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
-
-    auto res = jsi::Object(rt);
 
     if (withBiometrics) {
       BiometricsState biometricsState = getBiometricsState(promptArgs.allowDeviceCredential);
@@ -450,18 +510,21 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     }
 
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
-    
+
     bool withBiometrics = false;
     if (params.hasProperty(rt, "withBiometrics")) {
       withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
     }
-    
+
     ItemScope scope;
     std::string scopeError = extractItemScope(rt, params, scope);
     if (!scopeError.empty()) {
       throw jsi::JSError(rt, scopeError);
     }
-    _delete(key, scope, withBiometrics);
+    scopeError = _delete(key, scope, withBiometrics);
+    if (!scopeError.empty()) {
+      throw jsi::JSError(rt, scopeError);
+    }
     return {};
   });
 
