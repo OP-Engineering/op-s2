@@ -48,7 +48,6 @@ static NSString *stringToNSString(const std::string &str) {
 // present but neither a string nor null/undefined; `out` is left untouched
 // unless a string is found.
 static bool readOptionalString(jsi::Runtime &rt, const jsi::Object &obj, const char *name, std::string &out) {
-  if (!obj.hasProperty(rt, name)) return true;
   jsi::Value v = obj.getProperty(rt, name);
   if (v.isNull() || v.isUndefined()) return true;
   if (!v.isString()) return false;

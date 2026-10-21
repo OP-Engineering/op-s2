@@ -146,7 +146,7 @@ type GetErrors =
 
 type DelErrors = ScopeErrors;
 
-interface ItemScope {
+export interface ItemScope {
   /**
    * iOS only: the keychain service (`kSecAttrService`) the item is stored
    * under. Defaults to the app's bundle identifier. Use the same value for
