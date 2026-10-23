@@ -117,13 +117,21 @@ type SharedOperationErrors =
   | `[op-s2] Security error code: ${string}. Look up code error at https://www.osstatus.com/`
   | `op-s2 could not set value, error code: ${string}`;
 
+type ScopeErrors =
+  | 'service is not valid UTF-8'
+  | 'accessGroup is not valid UTF-8'
+  | '[op-s2] Could not determine the default service, pass service explicitly';
+
 type SetErrors =
   | 'Params object is missing'
   | 'Params is not an object'
   | 'Key property is missing'
   | 'Value property is missing'
   | 'Value property is not a string'
+  | 'service property is not a string'
+  | 'accessGroup property is not a string'
   | '[op-s2] Could not set value, duplicate item'
+  | ScopeErrors
   | SharedOperationErrors;
 
 type GetErrors =
@@ -132,9 +140,31 @@ type GetErrors =
   | 'key property is missing'
   | '[op-s2] Item not found'
   | 'Biometrics not available'
+  | ScopeErrors
   | SharedOperationErrors;
 
-interface SetParams {
+type DelErrors = ScopeErrors;
+
+export interface ItemScope {
+  /**
+   * iOS only: the keychain service (`kSecAttrService`) the item is stored
+   * under. Defaults to the app's bundle identifier. Use the same value for
+   * `set`, `get` and `del` of an item.
+   */
+  service?: string;
+  /**
+   * iOS only: the keychain access group (`kSecAttrAccessGroup`) the item is
+   * stored in, e.g. to share it with an app extension. The app must have the
+   * group in its `keychain-access-groups` or app group entitlement, otherwise
+   * the operation fails with `[op-s2] Missing entitlement`.
+   *
+   * When omitted, no access group is set: `set` writes to the app's default
+   * access group.
+   */
+  accessGroup?: string;
+}
+
+interface SetParams extends ItemScope {
   key: string;
   value: string;
   /**
@@ -153,7 +183,7 @@ interface SetParams {
   biometricPrompt?: BiometricPromptOptions;
 }
 
-interface GetParams {
+interface GetParams extends ItemScope {
   key: string;
   accessibility?: ACCESSIBILITY;
   withBiometrics?: boolean;
@@ -163,11 +193,13 @@ interface GetParams {
 interface OPS2 {
   set: (params: SetParams) => { error?: SetErrors };
   get: (params: GetParams) => { value: string | undefined; error?: GetErrors };
-  del: (params: {
-    key: string;
-    withBiometrics?: boolean;
-    biometricPrompt?: BiometricPromptOptions;
-  }) => void;
+  del: (
+    params: ItemScope & {
+      key: string;
+      withBiometrics?: boolean;
+      biometricPrompt?: BiometricPromptOptions;
+    }
+  ) => { error?: DelErrors };
 }
 
 // Map the string-based ACCESSIBILITY enum to the integer codes the iOS
@@ -193,7 +225,7 @@ function normalizeAccessibility(
   return mapped ?? 1; // default to kSecAttrAccessibleAfterFirstUnlock
 }
 
-type NativeSetParams = {
+type NativeSetParams = ItemScope & {
   key: string;
   value: string;
   accessibility?: number;
@@ -201,7 +233,7 @@ type NativeSetParams = {
   biometricPrompt?: BiometricPromptOptions;
 };
 
-type NativeGetParams = {
+type NativeGetParams = ItemScope & {
   key: string;
   accessibility?: number;
   withBiometrics?: boolean;

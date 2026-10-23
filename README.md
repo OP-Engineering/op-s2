@@ -110,6 +110,44 @@ The resulting Android authenticator combinations are:
 
 If you pass `withBiometrics: true` without a `biometricPrompt` object at all, the prompt falls back to the defaults listed above.
 
+### iOS Service and Access Group
+
+On iOS, an item is identified by its `key`, a keychain service and an access group. `service` and `accessGroup` are both optional. If omitted, the service is the app's bundle identifier and no access group is set.
+
+| Option        | Explanation                                                                                                                                                                                                                                                       | Default                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `service`     | The keychain service (`kSecAttrService`).                                                                                                                                                                                                                         | The app's bundle identifier |
+| `accessGroup` | The keychain access group (`kSecAttrAccessGroup`). The app (and any extension reading the item) must list it in its `keychain-access-groups` entitlement, or use an app group ID (`group.*`) it has. Otherwise the call fails with `[op-s2] Missing entitlement`. | None (see below)            |
+
+#### Sharing an item with an app extension
+
+Pass both options explicitly, with the same values in the app and in the extension:
+
+```ts
+const scope = {
+  // The extension has its own bundle identifier, so the default service
+  // would differ between the two. Pin it to one value.
+  service: 'com.example.app',
+  // An app group (or keychain access group) both targets are entitled to.
+  accessGroup: 'group.com.example.app',
+};
+
+set({ key: 'token', value: 'secret', ...scope });
+const { value } = get({ key: 'token', ...scope });
+del({ key: 'token', ...scope });
+```
+
+#### Notes
+
+- Empty strings are treated as unset.
+- If you pass `service` or `accessGroup` for an item, pass the same values in every `set`, `get` and `del` call for it:
+  - With a different `service`, the item isn't found.
+  - Without `accessGroup`, the call isn't limited to one group. A `set` or `del` then also deletes the copy stored in your shared group, and a `get` may return a copy from another group.
+- If the default `service` can't be determined (a nil bundle identifier), or a given `service` or `accessGroup` can't be converted, the operation returns an `error` rather than running a query that matches every service or group.
+- A non-string `service` or `accessGroup` is rejected rather than silently using the default scope, on both platforms: `set` returns an `error`, and `get` and `del` throw, as they do for a missing `key`.
+- Otherwise both options are ignored on Android, where items are always private to the app.
+- If you've never passed either option, upgrading changes nothing: items saved by earlier versions of op-s2 are still found.
+
 ## Secure Enclave
 
 The library already uses the [Secure Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web) to encrypt the data before saving it on the keychain. However, it is not possible to store data directly on the Secure Enclave as it is meant to store the private part of asymmetrical keys, meaning data saved there cannot be retrieved to user space.
