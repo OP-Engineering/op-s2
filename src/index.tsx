@@ -120,8 +120,7 @@ type SharedOperationErrors =
 type ScopeErrors =
   | 'service is not valid UTF-8'
   | 'accessGroup is not valid UTF-8'
-  | '[op-s2] Could not determine the default service, pass service explicitly'
-  | `[op-s2] Could not determine the default access group. ${string}`;
+  | '[op-s2] Could not determine the default service, pass service explicitly';
 
 type SetErrors =
   | 'Params object is missing'
@@ -159,9 +158,8 @@ export interface ItemScope {
    * group in its `keychain-access-groups` or app group entitlement, otherwise
    * the operation fails with `[op-s2] Missing entitlement`.
    *
-   * When omitted, every operation uses the app's default access group (the
-   * first group in its access group list), so it never touches a copy of the
-   * item shared through another group.
+   * When omitted, no access group is set: `set` writes to the app's default
+   * access group.
    */
   accessGroup?: string;
 }

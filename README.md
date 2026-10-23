@@ -112,11 +112,23 @@ If you pass `withBiometrics: true` without a `biometricPrompt` object at all, th
 
 ### iOS Service and Access Group
 
-On iOS every item is identified by its `key` plus a keychain service and access group. Pass `service` and/or `accessGroup` to `set`, `get` and `del` to control them, e.g. to share an item with an app extension:
+On iOS, an item is identified by its `key`, a keychain service and an access group. `service` and `accessGroup` are both optional. If omitted, the service is the app's bundle identifier and no access group is set.
+
+| Option        | Explanation                                                                                                                                                                                                                                                       | Default                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `service`     | The keychain service (`kSecAttrService`).                                                                                                                                                                                                                         | The app's bundle identifier |
+| `accessGroup` | The keychain access group (`kSecAttrAccessGroup`). The app (and any extension reading the item) must list it in its `keychain-access-groups` entitlement, or use an app group ID (`group.*`) it has. Otherwise the call fails with `[op-s2] Missing entitlement`. | None (see below)            |
+
+#### Sharing an item with an app extension
+
+Pass both options explicitly, with the same values in the app and in the extension:
 
 ```ts
 const scope = {
+  // The extension has its own bundle identifier, so the default service
+  // would differ between the two. Pin it to one value.
   service: 'com.example.app',
+  // An app group (or keychain access group) both targets are entitled to.
   accessGroup: 'group.com.example.app',
 };
 
@@ -125,17 +137,16 @@ const { value } = get({ key: 'token', ...scope });
 del({ key: 'token', ...scope });
 ```
 
-| Option        | Explanation                                                                                                                                                                                                                                           | Default                     |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| `service`     | The keychain service (`kSecAttrService`).                                                                                                                                                                                                             | The app's bundle identifier |
-| `accessGroup` | The keychain access group (`kSecAttrAccessGroup`). The app (and any extension reading the item) must list it in its `keychain-access-groups` entitlement, or use an app group ID (`group.*`) it has. Otherwise the call fails with `[op-s2] Missing entitlement`. | The app's default group     |
+#### Notes
 
 - Empty strings are treated as unset.
-- Use the same `service` and `accessGroup` for every operation on an item. An item written without them is not found by a `get` with a different `service`.
-- Omitting `accessGroup` means the app's default access group (the first group in its access group list) for `set`, `get` and `del` alike. Unlike a raw Keychain query without an access group, it never reads, replaces or deletes a copy of the item stored in another group.
-- If the default `service` or access group can't be determined (e.g. a nil bundle identifier, or a Keychain error before the first unlock), the operation returns an `error` rather than falling back to an unscoped query.
+- If you pass `service` or `accessGroup` for an item, pass the same values in every `set`, `get` and `del` call for it:
+  - With a different `service`, the item isn't found.
+  - Without `accessGroup`, the call isn't limited to one group. A `set` or `del` then also deletes the copy stored in your shared group, and a `get` may return a copy from another group.
+- If the default `service` can't be determined (a nil bundle identifier), or a given `service` or `accessGroup` can't be converted, the operation returns an `error` rather than running a query that matches every service or group.
 - A non-string `service` or `accessGroup` is rejected rather than silently using the default scope, on both platforms: `set` returns an `error`, and `get` and `del` throw, as they do for a missing `key`.
 - Otherwise both options are ignored on Android, where items are always private to the app.
+- If you've never passed either option, upgrading changes nothing: items saved by earlier versions of op-s2 are still found.
 
 ## Secure Enclave
 

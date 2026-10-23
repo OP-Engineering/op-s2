@@ -3,7 +3,6 @@
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <Security/Security.h>
 #import <dispatch/dispatch.h>
-#include <mutex>
 
 namespace ops2 {
 namespace jsi = facebook::jsi;
@@ -18,8 +17,7 @@ struct BiometricPromptArgs {
 
 // Identifies which keychain item an operation targets beyond its key.
 // Empty strings mean "unset": the service falls back to the bundle identifier
-// and no access group is set, which matches the behavior before these options
-// existed.
+// and no access group is set.
 struct ItemScope {
   std::string service;
   std::string accessGroup;
@@ -180,43 +178,6 @@ SecAccessControlRef createBioSecAccessControl(bool allowDeviceCredential, bool a
       nil);
 }
 
-std::string getSecurityErrorMessage(OSStatus status);
-
-static OSStatus getDefaultAccessGroup(NSString **out) {
-  static std::mutex mutex;
-  static NSString *cached = nil;
-  std::lock_guard<std::mutex> lock(mutex);
-  if (cached != nil) {
-    *out = cached;
-    return noErr;
-  }
-
-  NSDictionary *probe = @{
-    (__bridge id)kSecClass: (__bridge id)kSecClassGenericPassword,
-    (__bridge id)kSecAttrService: @"op-s2.default-access-group-probe",
-    (__bridge id)kSecAttrAccount: @"probe",
-  };
-  // The probe's own queries can match every group: its service is private
-  // to op-s2. Clear a probe left behind by an interrupted earlier run.
-  SecItemDelete((__bridge CFDictionaryRef)probe);
-
-  NSMutableDictionary *add = [probe mutableCopy];
-  [add setObject:(__bridge id)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly forKey:(__bridge id)kSecAttrAccessible];
-  [add setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnAttributes];
-  CFTypeRef result = NULL;
-  OSStatus status = SecItemAdd((__bridge CFDictionaryRef)add, &result);
-  if (status != noErr) return status;
-
-  NSDictionary *attributes = (__bridge_transfer NSDictionary *)result;
-  SecItemDelete((__bridge CFDictionaryRef)probe);
-
-  NSString *group = [attributes objectForKey:(__bridge id)kSecAttrAccessGroup];
-  if (group == nil) return errSecItemNotFound;
-  cached = group;
-  *out = cached;
-  return noErr;
-}
-
 NSMutableDictionary *get_base_entry_dict(const std::string &key, const ItemScope &scope, std::string &error) {
   NSString *service = scope.service.empty()
       ? [[NSBundle mainBundle] bundleIdentifier]
@@ -228,19 +189,10 @@ NSMutableDictionary *get_base_entry_dict(const std::string &key, const ItemScope
     return nil;
   }
 
-  NSString *accessGroup = nil;
-  if (scope.accessGroup.empty()) {
-    OSStatus status = getDefaultAccessGroup(&accessGroup);
-    if (status != noErr) {
-      error = "[op-s2] Could not determine the default access group. " + getSecurityErrorMessage(status);
-      return nil;
-    }
-  } else {
-    accessGroup = stringToNSString(scope.accessGroup);
-    if (accessGroup == nil) {
-      error = "accessGroup is not valid UTF-8";
-      return nil;
-    }
+  NSString *accessGroup = scope.accessGroup.empty() ? nil : stringToNSString(scope.accessGroup);
+  if (!scope.accessGroup.empty() && accessGroup == nil) {
+    error = "accessGroup is not valid UTF-8";
+    return nil;
   }
 
   NSMutableDictionary *queryDictionary = [[NSMutableDictionary alloc] init];
@@ -250,7 +202,9 @@ NSMutableDictionary *get_base_entry_dict(const std::string &key, const ItemScope
   [queryDictionary setObject:encodedIdentifier forKey:(__bridge id)kSecAttrGeneric];
   [queryDictionary setObject:encodedIdentifier forKey:(__bridge id)kSecAttrAccount];
   [queryDictionary setObject:service forKey:(__bridge id)kSecAttrService];
-  [queryDictionary setObject:accessGroup forKey:(__bridge id)kSecAttrAccessGroup];
+  if (accessGroup != nil) {
+    [queryDictionary setObject:accessGroup forKey:(__bridge id)kSecAttrAccessGroup];
+  }
 
   return queryDictionary;
 }
