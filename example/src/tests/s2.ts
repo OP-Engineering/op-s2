@@ -213,26 +213,43 @@ describe('service / accessGroup validation', () => {
     });
     expect(groupError).toEqual('accessGroup property is not a string');
 
-    // Like a missing key, an invalid param makes get/del throw.
-    let getError: unknown;
-    try {
-      // @ts-ignore
-      get({ key, service: 123 });
-    } catch (e) {
-      getError = e;
-    }
-    expect(String(getError)).toContain('service property is not a string');
-
-    let delError: unknown;
-    try {
-      // @ts-ignore
-      del({ key, accessGroup: 123 });
-    } catch (e) {
-      delError = e;
-    }
-    expect(String(delError)).toContain('accessGroup property is not a string');
+    // @ts-ignore
+    expect(get({ key, service: 123 }).error).toEqual(
+      'service property is not a string'
+    );
+    // @ts-ignore
+    expect(del({ key, accessGroup: 123 }).error).toEqual(
+      'accessGroup property is not a string'
+    );
 
     expect(get({ key }).error).toEqual('[op-s2] Item not found');
+  });
+
+  it('returns the same params errors from set, get and del', () => {
+    const key = 'key_params_invalid';
+    const cases: [object, string][] = [
+      [{}, 'Key property is missing'],
+      [{ key: 123 }, 'Key property is not a string'],
+      [
+        { key, withBiometrics: 'yes' },
+        'withBiometrics property is not a boolean',
+      ],
+    ];
+    for (const [params, expected] of cases) {
+      // @ts-ignore
+      expect(set({ value: 'myValue', ...params }).error).toEqual(expected);
+      // @ts-ignore
+      expect(get(params).error).toEqual(expected);
+      // @ts-ignore
+      expect(del(params).error).toEqual(expected);
+    }
+
+    // @ts-ignore
+    expect(set({ key }).error).toEqual('Value property is missing');
+    // @ts-ignore
+    expect(del('key').error).toEqual('Params is not an object');
+    // @ts-ignore
+    expect(del().error).toEqual('Params object is missing');
   });
 
   it('returns an object without error from a valid del', () => {

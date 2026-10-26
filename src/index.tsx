@@ -117,33 +117,40 @@ type SharedOperationErrors =
   | `[op-s2] Security error code: ${string}. Look up code error at https://www.osstatus.com/`
   | `op-s2 could not set value, error code: ${string}`;
 
+type ParamsErrors =
+  | 'Params object is missing'
+  | 'Params is not an object'
+  | 'Key property is missing'
+  | 'Key property is not a string'
+  | 'withBiometrics property is not a boolean'
+  | 'service property is not a string'
+  | 'accessGroup property is not a string';
+
 type ScopeErrors =
   | 'service is not valid UTF-8'
   | 'accessGroup is not valid UTF-8'
   | '[op-s2] Could not determine the default service, pass service explicitly';
 
 type SetErrors =
-  | 'Params object is missing'
-  | 'Params is not an object'
-  | 'Key property is missing'
+  | ParamsErrors
   | 'Value property is missing'
   | 'Value property is not a string'
-  | 'service property is not a string'
-  | 'accessGroup property is not a string'
   | '[op-s2] Could not set value, duplicate item'
+  | 'Biometrics not available'
   | ScopeErrors
   | SharedOperationErrors;
 
 type GetErrors =
-  | 'Params object is missing'
-  | 'Params must be an object with key and value'
-  | 'key property is missing'
+  | ParamsErrors
   | '[op-s2] Item not found'
   | 'Biometrics not available'
   | ScopeErrors
   | SharedOperationErrors;
 
-type DelErrors = ScopeErrors;
+type DelErrors =
+  | ParamsErrors
+  | ScopeErrors
+  | `op-s2 could not delete value, error code: ${string}`;
 
 export interface ItemScope {
   /**

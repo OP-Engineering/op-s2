@@ -144,7 +144,7 @@ del({ key: 'token', ...scope });
   - With a different `service`, the item isn't found.
   - Without `accessGroup`, the call isn't limited to one group. A `set` or `del` then also deletes the copy stored in your shared group, and a `get` may return a copy from another group.
 - If the default `service` can't be determined (a nil bundle identifier), or a given `service` or `accessGroup` can't be converted, the operation returns an `error` rather than running a query that matches every service or group.
-- A non-string `service` or `accessGroup` is rejected rather than silently using the default scope, on both platforms: `set` returns an `error`, and `get` and `del` throw, as they do for a missing `key`.
+- A non-string `service` or `accessGroup` is rejected rather than silently using the default scope, on both platforms: the operation returns an `error`, as it does for a missing `key`.
 - Otherwise both options are ignored on Android, where items are always private to the app.
 - If you've never passed either option, upgrading changes nothing: items saved by earlier versions of op-s2 are still found.
 

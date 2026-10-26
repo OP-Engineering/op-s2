@@ -1,5 +1,6 @@
 #include "bindings.h"
 #include "macros.h"
+#include "params.h"
 #include <iostream>
 #include <jni.h>
 
@@ -52,16 +53,6 @@ static BiometricPromptOptions extractBiometricPromptOptions(jsi::Runtime &rt, co
   return options;
 }
 
-static const char *validateItemScope(jsi::Runtime &rt, const jsi::Object &params) {
-  auto isInvalid = [&](const char *name) {
-    jsi::Value v = params.getProperty(rt, name);
-    return !v.isNull() && !v.isUndefined() && !v.isString();
-  };
-  if (isInvalid("service")) return "service property is not a string";
-  if (isInvalid("accessGroup")) return "accessGroup property is not a string";
-  return nullptr;
-}
-
 void install(
     jsi::Runtime &rt,
     std::function<void(const char *, const char *, bool, BiometricPromptOptions)> setFn,
@@ -75,46 +66,17 @@ void install(
   auto set = HOSTFN("set", 1) {
     auto res = jsi::Object(rt);
 
-    if (count < 1) {
-      res.setProperty(rt, "error", "Params object is missing");
-      return res;
-    }
-
-    if (!args[0].isObject()) {
-      res.setProperty(rt, "error", "Params is not an object");
+    if (const char *paramsError = validateParams(rt, args, count, true)) {
+      res.setProperty(rt, "error", paramsError);
       return res;
     }
 
     jsi::Object params = args[0].asObject(rt);
 
-    if (!params.hasProperty(rt, "key")) {
-      res.setProperty(rt, "error", "Key property is missing");
-      return res;
-    }
-
-    if (!params.hasProperty(rt, "value")) {
-      res.setProperty(rt, "error", "Value property is missing");
-      return res;
-    }
-
-    if (!params.getProperty(rt, "value").isString()) {
-      res.setProperty(rt, "error", "Value property is not a string");
-      return res;
-    }
-
-    if (const char *scopeError = validateItemScope(rt, params)) {
-      res.setProperty(rt, "error", scopeError);
-      return res;
-    }
-
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
     std::string val = params.getProperty(rt, "value").asString(rt).utf8(rt);
 
-    bool withBiometrics = false;
-
-    if (params.hasProperty(rt, "withBiometrics")) {
-      withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
-    }
+    bool withBiometrics = readWithBiometrics(rt, params);
 
     BiometricPromptOptions promptOptions = extractBiometricPromptOptions(rt, params);
 
@@ -131,35 +93,20 @@ void install(
   });
 
   auto get = HOSTFN("get", 1) {
-    if (count < 1) {
-      throw jsi::JSError(rt, "Params object is missing");
-    }
+    auto res = jsi::Object(rt);
 
-    if (!args[0].isObject()) {
-      throw jsi::JSError(rt, "Params must be an object with key and value");
+    if (const char *paramsError = validateParams(rt, args, count, false)) {
+      res.setProperty(rt, "error", paramsError);
+      return res;
     }
 
     jsi::Object params = args[0].asObject(rt);
 
-    if (!params.hasProperty(rt, "key")) {
-      throw jsi::JSError(rt, "key property is missing");
-    }
-
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
 
-    bool withBiometrics = false;
-
-    if (params.hasProperty(rt, "withBiometrics")) {
-      withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
-    }
+    bool withBiometrics = readWithBiometrics(rt, params);
 
     BiometricPromptOptions promptOptions = extractBiometricPromptOptions(rt, params);
-
-    if (const char *scopeError = validateItemScope(rt, params)) {
-      throw jsi::JSError(rt, scopeError);
-    }
-
-    auto res = jsi::Object(rt);
 
     try {
       auto val = _get(key.c_str(), withBiometrics, promptOptions);
@@ -180,37 +127,31 @@ void install(
 
   auto del = HOSTFN("del", 1) {
 
-    if (count < 1) {
-      throw jsi::JSError(rt, "Params object is missing");
-    }
+    auto res = jsi::Object(rt);
 
-    if (!args[0].isObject()) {
-      throw jsi::JSError(rt, "Params must be an object with key and value");
+    if (const char *paramsError = validateParams(rt, args, count, false)) {
+      res.setProperty(rt, "error", paramsError);
+      return res;
     }
 
     jsi::Object params = args[0].asObject(rt);
 
-    if (!params.hasProperty(rt, "key")) {
-      throw jsi::JSError(rt, "key property is missing");
-    }
-
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
 
-    bool withBiometrics = false;
-
-    if (params.hasProperty(rt, "withBiometrics")) {
-      withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
-    }
+    bool withBiometrics = readWithBiometrics(rt, params);
 
     BiometricPromptOptions promptOptions = extractBiometricPromptOptions(rt, params);
 
-    if (const char *scopeError = validateItemScope(rt, params)) {
-      throw jsi::JSError(rt, scopeError);
+    try {
+      _del(key.c_str(), withBiometrics, promptOptions);
+    } catch (std::exception &e) {
+      auto errorStr = jsi::String::createFromUtf8(
+          rt,
+          "op-s2 could not delete value, error code: " + std::string(e.what()));
+      res.setProperty(rt, "error", errorStr);
     }
 
-    _del(key.c_str(), withBiometrics, promptOptions);
-
-    return jsi::Object(rt);
+    return res;
   });
 
   jsi::Object module = jsi::Object(rt);
