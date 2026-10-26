@@ -8,6 +8,7 @@ add_library(
   SHARED
   ../cpp/logs.h
   ../cpp/macros.h
+  ../cpp/params.h
   bindings.h
   bindings.cpp
   cpp-adapter.cpp

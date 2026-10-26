@@ -1,5 +1,6 @@
 #include "bindings.h"
 #import "macros.h"
+#import "params.h"
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <Security/Security.h>
 #import <dispatch/dispatch.h>
@@ -95,17 +96,13 @@ static BiometricPromptArgs extractBiometricPromptArgs(jsi::Runtime &rt, const js
   return args;
 }
 
-// Reads `service` and `accessGroup` into `scope`. Returns an error message
-// when either is present with a non-string value, so a typo can't silently
-// fall back to the default scope; returns an empty string otherwise.
-static std::string extractItemScope(jsi::Runtime &rt, const jsi::Object &params, ItemScope &scope) {
-  if (!readOptionalString(rt, params, "service", scope.service)) {
-    return "service property is not a string";
-  }
-  if (!readOptionalString(rt, params, "accessGroup", scope.accessGroup)) {
-    return "accessGroup property is not a string";
-  }
-  return "";
+// Reads `service` and `accessGroup`. Their types are checked beforehand by
+// `validateParams`.
+static ItemScope extractItemScope(jsi::Runtime &rt, const jsi::Object &params) {
+  ItemScope scope;
+  readOptionalString(rt, params, "service", scope.service);
+  readOptionalString(rt, params, "accessGroup", scope.accessGroup);
+  return scope;
 }
 
 // MARK: - LAContext Factory
@@ -287,30 +284,15 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
   auto set = HOSTFN("set", 1) {
     auto res = jsi::Object(rt);
 
-    if (count < 1 || !args[0].isObject()) {
-      res.setProperty(rt, "error", "Params must be an object");
+    if (const char *paramsError = validateParams(rt, args, count, true)) {
+      res.setProperty(rt, "error", paramsError);
       return res;
     }
 
     jsi::Object params = args[0].asObject(rt);
 
-    if (!params.hasProperty(rt, "key") || !params.hasProperty(rt, "value")) {
-      res.setProperty(rt, "error", "Key or Value property is missing");
-      return res;
-    }
-
-    if (!params.getProperty(rt, "value").isString()) {
-      res.setProperty(rt, "error", "Value property is not a string");
-      return res;
-    }
-
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
-    ItemScope scope;
-    std::string scopeError = extractItemScope(rt, params, scope);
-    if (!scopeError.empty()) {
-      res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
-      return res;
-    }
+    ItemScope scope = extractItemScope(rt, params);
 
     std::string val = params.getProperty(rt, "value").asString(rt).utf8(rt);
 
@@ -319,10 +301,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
       accessibility = getAccessibilityValue(static_cast<int>(params.getProperty(rt, "accessibility").asNumber()));
     }
 
-    bool withBiometrics = false;
-    if (params.hasProperty(rt, "withBiometrics")) {
-      withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
-    }
+    bool withBiometrics = readWithBiometrics(rt, params);
 
     BiometricPromptArgs promptArgs = extractBiometricPromptArgs(rt, params);
 
@@ -336,7 +315,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     }
 
     // Delete prior entries (both local and synced) to prevent errSecDuplicateItem
-    scopeError = _delete(key, scope, withBiometrics);
+    std::string scopeError = _delete(key, scope, withBiometrics);
     NSMutableDictionary *dict = scopeError.empty() ? get_base_entry_dict(key, scope, scopeError) : nil;
     if (dict == nil) {
       res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
@@ -374,31 +353,22 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
   });
 
   auto get = HOSTFN("get", 1) {
-    if (count < 1 || !args[0].isObject()) {
-      throw jsi::JSError(rt, "Params must be an object with key");
+    auto res = jsi::Object(rt);
+
+    if (const char *paramsError = validateParams(rt, args, count, false)) {
+      res.setProperty(rt, "error", paramsError);
+      return res;
     }
 
     jsi::Object params = args[0].asObject(rt);
 
-    if (!params.hasProperty(rt, "key")) {
-      throw jsi::JSError(rt, "key property is missing");
-    }
-
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
 
-    bool withBiometrics = false;
-    if (params.hasProperty(rt, "withBiometrics")) {
-      withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
-    }
+    bool withBiometrics = readWithBiometrics(rt, params);
 
     BiometricPromptArgs promptArgs = extractBiometricPromptArgs(rt, params);
-    ItemScope scope;
-    std::string scopeError = extractItemScope(rt, params, scope);
-    if (!scopeError.empty()) {
-      throw jsi::JSError(rt, scopeError);
-    }
-
-    auto res = jsi::Object(rt);
+    ItemScope scope = extractItemScope(rt, params);
+    std::string scopeError;
 
     NSMutableDictionary *dict = get_base_entry_dict(key, scope, scopeError);
     if (dict == nil) {
@@ -452,31 +422,21 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
   });
 
   auto del = HOSTFN("delete", 1) {
-    if (count < 1 || !args[0].isObject()) {
-      throw jsi::JSError(rt, "Params must be an object with key");
+    auto res = jsi::Object(rt);
+
+    if (const char *paramsError = validateParams(rt, args, count, false)) {
+      res.setProperty(rt, "error", paramsError);
+      return res;
     }
 
     jsi::Object params = args[0].asObject(rt);
 
-    if (!params.hasProperty(rt, "key")) {
-      throw jsi::JSError(rt, "key property is missing");
-    }
-
     std::string key = params.getProperty(rt, "key").asString(rt).utf8(rt);
 
-    bool withBiometrics = false;
-    if (params.hasProperty(rt, "withBiometrics")) {
-      withBiometrics = params.getProperty(rt, "withBiometrics").asBool();
-    }
+    bool withBiometrics = readWithBiometrics(rt, params);
 
-    ItemScope scope;
-    std::string scopeError = extractItemScope(rt, params, scope);
-    if (!scopeError.empty()) {
-      throw jsi::JSError(rt, scopeError);
-    }
-
-    auto res = jsi::Object(rt);
-    scopeError = _delete(key, scope, withBiometrics);
+    ItemScope scope = extractItemScope(rt, params);
+    std::string scopeError = _delete(key, scope, withBiometrics);
     if (!scopeError.empty()) {
       res.setProperty(rt, "error", jsi::String::createFromUtf8(rt, scopeError));
     }

@@ -115,6 +115,20 @@ buildBiometricPromptOptions(JNIEnv *env,
                         (jboolean)options.allowBiometricWeak);
 }
 
+void rethrowJavaException(JNIEnv *env) {
+  jthrowable exObj = env->ExceptionOccurred();
+  if (exObj) {
+    env->ExceptionClear();
+
+    jclass clazz = env->GetObjectClass(exObj);
+    jmethodID getMessage =
+        env->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
+    jstring message = (jstring)env->CallObjectMethod(exObj, getMessage);
+    const char *mstr = env->GetStringUTFChars(message, NULL);
+    throw std::runtime_error(std::string(mstr));
+  }
+}
+
 void set(const char *key, const char *value, bool withBiometrics,
          ops2::BiometricPromptOptions options) {
   JNIEnv *jniEnv = GetJniEnv();
@@ -129,17 +143,7 @@ void set(const char *key, const char *value, bool withBiometrics,
 
   jniEnv->CallVoidMethod(java_object, mid, jKey, jVal, withBiometrics, jOpts);
 
-  jthrowable exObj = jniEnv->ExceptionOccurred();
-  if (exObj) {
-    jniEnv->ExceptionClear();
-
-    jclass clazz = jniEnv->GetObjectClass(exObj);
-    jmethodID getMessage =
-        jniEnv->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
-    jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
-    const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
-    throw std::runtime_error(std::string(mstr));
-  }
+  rethrowJavaException(jniEnv);
 }
 
 std::string get(const char *key, bool withBiometrics,
@@ -156,17 +160,7 @@ std::string get(const char *key, bool withBiometrics,
   jstring result = (jstring)jniEnv->CallObjectMethod(java_object, mid, jKey,
                                                      withBiometrics, jOpts);
 
-  jthrowable exObj = jniEnv->ExceptionOccurred();
-  if (exObj) {
-    jniEnv->ExceptionClear();
-
-    jclass clazz = jniEnv->GetObjectClass(exObj);
-    jmethodID getMessage =
-        jniEnv->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
-    jstring message = (jstring)jniEnv->CallObjectMethod(exObj, getMessage);
-    const char *mstr = jniEnv->GetStringUTFChars(message, NULL);
-    throw std::runtime_error(std::string(mstr));
-  }
+  rethrowJavaException(jniEnv);
 
   if (result == NULL) {
     // TODO revisit this
@@ -188,6 +182,7 @@ void del(const char *key, bool withBiometrics,
   jobject jOpts = buildBiometricPromptOptions(jniEnv, options);
 
   jniEnv->CallVoidMethod(java_object, mid, jKey, withBiometrics, jOpts);
+  rethrowJavaException(jniEnv);
 }
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
